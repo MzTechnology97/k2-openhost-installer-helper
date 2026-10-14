@@ -26,6 +26,7 @@ if [[ -d "$PROFILE_DIR/macros" ]]; then
         macros/k2_t113.cfg
         macros/prtouch.cfg
         macros/cartographer.cfg
+        macros/host_fan.cfg
         macros/overrides.cfg
     )
 else

@@ -28,3 +28,5 @@ jobs:
         run: bash tests/test_release.sh
       - name: Creality camera tests
         run: bash tests/test_creality_cam.sh
+      - name: Host fan tests
+        run: bash tests/test_host_fan.sh
