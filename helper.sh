@@ -187,6 +187,7 @@ do_choice() {
         13) run extras.sh spoolman ;;
         14) run extras.sh mobileraker ;;
         15) run extras.sh octoeverywhere ;;
+        36) run extras.sh host-fan ;;
         16) run doctor.sh || true ;;
         17) run kalico.sh update; run moonraker.sh update; run mainsail.sh update ;;
         18) run config.sh diff | less -R ;;
@@ -236,6 +237,7 @@ menu() {
         item 13 "Spoolman connection" "$(mark spoolman)"
         item 14 "Mobileraker companion" "$(mark mobileraker)"
         item 15 "OctoEverywhere" "$(mark octoeverywhere)"
+        item 36 "Host fan from Klipper" "CM5 fan header, [host_fan] $(mark host-fan)"
         echo
         printf '  %s[Maintenance]%s\n' "$C_WHITE" "$C_NC"
         item 16 "Doctor" "read-only health check"
@@ -339,8 +341,8 @@ Usage: ./helper.sh [--yes] [command]
   install core        host prep, Kalico, K2 Pro config, Moonraker, Mainsail
   install <part>      system | kalico | config | moonraker | mainsail |
                       cartographer | shaketune | timelapse | crowsnest |
-                      creality-cam | hostmcu | spoolman | mobileraker |
-                      octoeverywhere
+                      creality-cam | host-fan | hostmcu | spoolman |
+                      mobileraker | octoeverywhere
   update              Kalico, Moonraker and Mainsail
   doctor              read-only health check
   health              doctor + report to the Klipper console (also runs by itself
@@ -388,7 +390,7 @@ main() {
                 full) install_full; summary ;;
                 core) install_core; summary ;;
                 system|kalico|config|moonraker|mainsail) run "$2.sh" install ;;
-                cartographer|shaketune|timelapse|crowsnest|creality-cam|hostmcu|spoolman|mobileraker|octoeverywhere) run extras.sh "$2" ;;
+                cartographer|shaketune|timelapse|crowsnest|creality-cam|host-fan|hostmcu|spoolman|mobileraker|octoeverywhere) run extras.sh "$2" ;;
                 *) usage; return 2 ;;
             esac ;;
         update) require_sudo; run kalico.sh update; run moonraker.sh update; run mainsail.sh update ;;

@@ -9,6 +9,7 @@
 #   spoolman      connect Moonraker to an existing Spoolman server
 #   mobileraker   Mobileraker companion (push notifications)
 #   octoeverywhere OctoEverywhere remote access
+#   host-fan      the host's CPU fan from Klipper ([host_fan], CM5 fan header)
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib/common.sh"
 
@@ -234,6 +235,78 @@ octoeverywhere() {
     mark_installed octoeverywhere
 }
 
+# The host's CPU fan from Klipper ([host_fan], kalico-k2pro #74). On a CM5
+# the fan header is the CM5's FAN_PWM/FAN_TACH, driven by the kernel's
+# pwm-fan driver (hwmon "pwmfan") from the cpu-thermal zone. Klipper needs
+# group write access to that hwmon's pwm1 and to the zone's mode (udev rule),
+# and the kernel must get the fan back if Klipper dies (ExecStopPost).
+HOST_FAN_SYSFS="${K2OH_SYSFS_ROOT:-/sys}"
+HOST_FAN_RULE="${K2OH_HOST_FAN_RULE:-/etc/udev/rules.d/99-k2oh-host-fan.rules}"
+HOST_FAN_DROPIN="${K2OH_HOST_FAN_DROPIN:-/etc/systemd/system/klipper.service.d/k2oh-host-fan.conf}"
+
+host_fan_hwmon() {
+    local h
+    for h in "$HOST_FAN_SYSFS"/class/hwmon/hwmon*; do
+        [[ "$(cat "$h/name" 2>/dev/null)" == "pwmfan" ]] && { echo "$h"; return 0; }
+    done
+    return 1
+}
+
+host_fan_zone() {
+    local z
+    for z in "$HOST_FAN_SYSFS"/class/thermal/thermal_zone*; do
+        [[ "$(cat "$z/type" 2>/dev/null)" == "cpu-thermal" ]] && { echo "$z"; return 0; }
+    done
+    return 1
+}
+
+host_fan() {
+    step "Host fan from Klipper (host_fan)"
+    [[ -f "$KLIPPER_DIR/klippy/extras/host_fan.py" ]] || die "this Kalico has no host_fan: update Kalico first"
+    local hwmon zone group name target src
+    hwmon="$(host_fan_hwmon)" || { warn "no pwm-fan on this host (hwmon 'pwmfan'): nothing to do"; return 0; }
+    zone="$(host_fan_zone)" || { warn "no cpu-thermal zone on this host: nothing to do"; return 0; }
+    group="$(id -gn)"
+    printf '%s\n' \
+        '# K2-OpenHost installer helper: let Klipper ([host_fan]) drive the CPU fan.' \
+        "SUBSYSTEM==\"hwmon\", ATTR{name}==\"pwmfan\", RUN+=\"/bin/chgrp $group /sys%p/pwm1\", RUN+=\"/bin/chmod g+w /sys%p/pwm1\"" \
+        "SUBSYSTEM==\"thermal\", ATTR{type}==\"cpu-thermal\", RUN+=\"/bin/chgrp $group /sys%p/mode\", RUN+=\"/bin/chmod g+w /sys%p/mode\"" \
+        | sudo tee "$HOST_FAN_RULE" >/dev/null
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger --action=change --subsystem-match=hwmon --subsystem-match=thermal || true
+    sudo udevadm settle || true
+    sudo mkdir -p "$(dirname "$HOST_FAN_DROPIN")"
+    printf '%s\n' \
+        '# K2-OpenHost installer helper: give the CPU fan back to the kernel when' \
+        '# Klipper stops, even after a crash ([host_fan] does it on a clean stop).' \
+        '[Service]' \
+        "ExecStopPost=-/bin/sh -c 'for z in /sys/class/thermal/thermal_zone*; do [ \"\$\$(cat \$\$z/type)\" = cpu-thermal ] && echo enabled > \$\$z/mode; done; true'" \
+        | sudo tee "$HOST_FAN_DROPIN" >/dev/null
+    sudo systemctl daemon-reload
+    if [[ -w "$hwmon/pwm1" && -w "$zone/mode" ]]; then
+        ok "Klipper can drive the fan ($hwmon, $zone)"
+    else
+        warn "$hwmon/pwm1 or $zone/mode is still not writable by $group: reboot the host"
+    fi
+    name="$(printer_file host_fan.cfg)"
+    target="$CONFIG_DIR/$name"
+    src="$KLIPPER_DIR/config/k2/macros/host_fan.cfg"
+    if [[ -f "$target" ]]; then
+        info "keeping your $target"
+    elif [[ -f "$src" ]]; then
+        mkdir -p "$(dirname "$target")"
+        cp "$src" "$target"
+        ok "$name installed"
+    else
+        warn "$src not found: update Kalico"
+    fi
+    if [[ -f "$target" ]]; then
+        add_include "$name"
+    fi
+    info "Restart Klipper to apply, not during a print. Commands: HOST_FAN_STATUS, SET_HOST_FAN."
+    mark_installed host-fan
+}
+
 if [[ "${K2OH_EXTRAS_LIB_ONLY:-0}" == "1" ]]; then
     return 0 2>/dev/null || exit 0
 fi
@@ -241,5 +314,6 @@ fi
 case "${1:-}" in
     hostmcu|cartographer|shaketune|timelapse|crowsnest|spoolman|mobileraker|octoeverywhere) "$1" ;;
     creality-cam) creality_cam ;;
-    *) die "usage: $0 hostmcu|cartographer|shaketune|timelapse|crowsnest|creality-cam|spoolman|mobileraker|octoeverywhere" ;;
+    host-fan) host_fan ;;
+    *) die "usage: $0 hostmcu|cartographer|shaketune|timelapse|crowsnest|creality-cam|host-fan|spoolman|mobileraker|octoeverywhere" ;;
 esac
