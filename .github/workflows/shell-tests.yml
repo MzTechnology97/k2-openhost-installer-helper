@@ -26,3 +26,5 @@ jobs:
         run: bash tests/test_t113_timezone.sh
       - name: Release tests
         run: bash tests/test_release.sh
+      - name: Creality camera tests
+        run: bash tests/test_creality_cam.sh

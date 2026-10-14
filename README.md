@@ -194,7 +194,7 @@ Before printing, follow the checks in the [hardware test plan](https://github.co
 Optional components:
 
 - **Cartographer3D**: the [official plugin](https://github.com/Cartographer3D/cartographer3d-plugin), which supports Kalico and the K2 directly, connected by direct USB. PRTouch stays the validated probe. The plugin is a pip package in `~/klippy-env` with its loader in `klippy/plugins/`; Moonraker updates it as a Python package and the installer keeps the loader after every Kalico install or update. A host with the former K2-OpenHost fork is migrated automatically.
-- **Crowsnest** webcam streaming.
+- **Crowsnest** webcam streaming. With the K2 Pro chamber camera (Creality CAM, USB `1d6c:0103`) connected, it also sets that camera's `[cam]` section to `max_fps: 25` and adds its controls in `v4l2ctl` (`./helper.sh install creality-cam` does only this step). At 30 fps the camera's auto exposure turns the image black; see [Chamber camera](https://github.com/MzTechnology97/K2-OpenHost/blob/main/docs/en/CAMERA.md). Reboot the host afterwards: the camera takes its controls from power-on.
 - **Host MCU** `[mcu rpi]`: GPIO, accelerometer and temperature of the host board.
 - **Spoolman** connection to an existing Spoolman server.
 - **Mobileraker** companion and **OctoEverywhere** remote access.
