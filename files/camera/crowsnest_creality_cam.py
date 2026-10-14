@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""K2-OpenHost: set crowsnest up for the K2 Pro chamber camera (Creality CAM).
+"""K2-OpenHost: set crowsnest up for the K2 Plus 1080p chamber camera
+(Creality CAM), fitted on the reference K2 Pro in place of its stock 720p one.
 
 The camera (USB 1d6c:0103, Fullhan firmware) needs two things from crowsnest:
   * max_fps 25: at 30 fps its auto exposure, once set, settles on a black
