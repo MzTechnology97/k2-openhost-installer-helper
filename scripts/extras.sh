@@ -5,7 +5,7 @@
 #   shaketune     Klippain Shake&Tune resonance tools
 #   timelapse     Moonraker timelapse (the K2 profile ships its macros)
 #   crowsnest     webcam streaming (with creality-cam when the K2 camera is connected)
-#   creality-cam  crowsnest settings for the K2 Pro chamber camera (Creality CAM)
+#   creality-cam  crowsnest settings for the K2 Plus 1080p chamber camera (Creality CAM)
 #   spoolman      connect Moonraker to an existing Spoolman server
 #   mobileraker   Mobileraker companion (push notifications)
 #   octoeverywhere OctoEverywhere remote access
@@ -170,7 +170,8 @@ crowsnest() {
     fi
 }
 
-# The K2 Pro chamber camera (USB 1d6c:0103, Creality CAM). Its firmware needs
+# The K2 Plus 1080p chamber camera (USB 1d6c:0103, Creality CAM), fitted on the
+# reference K2 Pro in place of its stock 720p camera. Its firmware needs
 # crowsnest at 25 fps (at 30 its auto exposure goes black) and its controls in
 # crowsnest's v4l2ctl, which crowsnest sends before the stream starts.
 CREALITY_CAM_ID="1d6c:0103"
