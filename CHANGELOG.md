@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **Host fan from Klipper (`install host-fan`, menu 36).** For Kalico's `[host_fan]` (kalico-k2pro #74), which drives the CM5's CPU fan (hwmon `pwmfan`, `cpu-thermal` zone). It installs:
+  - `/etc/udev/rules.d/99-k2oh-host-fan.rules`: group write access to `pwm1` and to the zone's `mode`;
+  - `/etc/systemd/system/klipper.service.d/k2oh-host-fan.conf`: `ExecStopPost` sets the zone back to `enabled`, so the kernel gets the fan back after a crash too;
+  - `macros/host_fan.cfg` from the profile (a user's own file is kept), included before `overrides.cfg`.
+  It refuses on a Kalico without the module, does nothing on a host without `pwm-fan`, and never restarts Klipper. `config install` also copies `macros/host_fan.cfg` (not included by default). Tests: `tests/test_host_fan.sh`.
 - **K2 Pro chamber camera (Creality CAM, `1d6c:0103`).** At 30 fps its auto exposure settles on a black image; at 25 fps, with its controls sent before the stream, it matches the stock firmware. `crowsnest` (and `install creality-cam` on its own) sets the `[cam]` section whose `device` is that camera to `max_fps: 25`, adds `v4l2ctl: brightness=128,contrast=128,sharpness=128,saturation=128,power_line_frequency=1,auto_exposure=3` when there is none, and raises crowsnest's default 640x480 to 1920x1080. Other cameras, a user's own `v4l2ctl` and comments are kept, with a backup of `crowsnest.conf`; manual exposure (`auto_exposure` 1/2, which freezes this camera) is flagged. Tests: `tests/test_creality_cam.sh`. Details: K2-OpenHost `docs/en/CAMERA.md`.
 - **T113 time zone from the host.** The T113 ships on China time (`Asia/Shanghai`, `CST-8`), so the printer's logs did not line up with the host's. `t113 timezone` sets slot B to this host's zone through `uci` (IANA name and POSIX string from the host's zoneinfo, applied with `/etc/init.d/system reload`, kept in slot B's persistent layer); `boot-b`, `commit` and `update` do it too. Slot A is never written; an unreadable host zone only warns. Tests: `tests/test_t113_timezone.sh`.
 - **Config: RFID extras.** `config` also installs `macros/box_rfid_diag.cfg`, `macros/box_rfid_bambu.cfg` and `macros/box_rfid_mifare.cfg` (kalico-k2pro #44). The generic `printer.cfg` keeps their includes commented out: they need the API7 CFS RFID firmware. Without the files, a printer that enables the includes would not start.
