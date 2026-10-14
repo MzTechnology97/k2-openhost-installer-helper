@@ -4,7 +4,8 @@
 #   cartographer  Cartographer3D plugin, official (direct USB to the host)
 #   shaketune     Klippain Shake&Tune resonance tools
 #   timelapse     Moonraker timelapse (the K2 profile ships its macros)
-#   crowsnest     webcam streaming
+#   crowsnest     webcam streaming (with creality-cam when the K2 camera is connected)
+#   creality-cam  crowsnest settings for the K2 Pro chamber camera (Creality CAM)
 #   spoolman      connect Moonraker to an existing Spoolman server
 #   mobileraker   Mobileraker companion (push notifications)
 #   octoeverywhere OctoEverywhere remote access
@@ -163,6 +164,39 @@ crowsnest() {
         (cd "$CROWSNEST_DIR" && sudo make install)
     fi
     mark_installed crowsnest
+    if creality_cam_present; then
+        creality_cam
+    fi
+}
+
+# The K2 Pro chamber camera (USB 1d6c:0103, Creality CAM). Its firmware needs
+# crowsnest at 25 fps (at 30 its auto exposure goes black) and its controls in
+# crowsnest's v4l2ctl, which crowsnest sends before the stream starts.
+CREALITY_CAM_ID="1d6c:0103"
+CREALITY_CAM_GLOB="${K2OH_CREALITY_CAM_GLOB:-/dev/v4l/by-id/usb-Creality_3D_Technology_CREALITY_CAM_*-video-index0}"
+
+creality_cam_present() { lsusb -d "$CREALITY_CAM_ID" >/dev/null 2>&1; }
+
+creality_cam() {
+    step "Creality chamber camera (crowsnest settings)"
+    local conf="$CONFIG_DIR/crowsnest.conf" link rc=0
+    local -a devices=()
+    for link in $CREALITY_CAM_GLOB; do
+        [[ -e "$link" ]] && devices+=("$link")
+    done
+    if [[ ${#devices[@]} -eq 0 ]]; then
+        info "the Creality CAM is not connected: run './helper.sh install creality-cam' with it plugged in"
+        return 0
+    fi
+    [[ -f "$conf" ]] || { warn "$conf not found: install crowsnest first"; return 0; }
+    python3 "$FILES_DIR/camera/crowsnest_creality_cam.py" "$conf" "${devices[@]}" || rc=$?
+    case "$rc" in
+        0) ok "crowsnest: max_fps 25 and the camera controls in v4l2ctl"
+           info "the camera takes them from its power-on: reboot the host to apply" ;;
+        3) warn "no [cam] section in $conf uses ${devices[0]}: set its 'device:' to that path and run this again" ;;
+        *) warn "could not update $conf" ;;
+    esac
+    mark_installed creality-cam
 }
 
 spoolman() {
@@ -200,7 +234,12 @@ octoeverywhere() {
     mark_installed octoeverywhere
 }
 
+if [[ "${K2OH_EXTRAS_LIB_ONLY:-0}" == "1" ]]; then
+    return 0 2>/dev/null || exit 0
+fi
+
 case "${1:-}" in
     hostmcu|cartographer|shaketune|timelapse|crowsnest|spoolman|mobileraker|octoeverywhere) "$1" ;;
-    *) die "usage: $0 hostmcu|cartographer|shaketune|timelapse|crowsnest|spoolman|mobileraker|octoeverywhere" ;;
+    creality-cam) creality_cam ;;
+    *) die "usage: $0 hostmcu|cartographer|shaketune|timelapse|crowsnest|creality-cam|spoolman|mobileraker|octoeverywhere" ;;
 esac

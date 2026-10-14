@@ -339,7 +339,8 @@ Usage: ./helper.sh [--yes] [command]
   install core        host prep, Kalico, K2 Pro config, Moonraker, Mainsail
   install <part>      system | kalico | config | moonraker | mainsail |
                       cartographer | shaketune | timelapse | crowsnest |
-                      hostmcu | spoolman | mobileraker | octoeverywhere
+                      creality-cam | hostmcu | spoolman | mobileraker |
+                      octoeverywhere
   update              Kalico, Moonraker and Mainsail
   doctor              read-only health check
   health              doctor + report to the Klipper console (also runs by itself
@@ -387,7 +388,7 @@ main() {
                 full) install_full; summary ;;
                 core) install_core; summary ;;
                 system|kalico|config|moonraker|mainsail) run "$2.sh" install ;;
-                cartographer|shaketune|timelapse|crowsnest|hostmcu|spoolman|mobileraker|octoeverywhere) run extras.sh "$2" ;;
+                cartographer|shaketune|timelapse|crowsnest|creality-cam|hostmcu|spoolman|mobileraker|octoeverywhere) run extras.sh "$2" ;;
                 *) usage; return 2 ;;
             esac ;;
         update) require_sudo; run kalico.sh update; run moonraker.sh update; run mainsail.sh update ;;
