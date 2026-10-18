@@ -60,3 +60,7 @@ INERT/BENCH images or different menu ordering. Updating this repository
 is not permission to overwrite the local manifest or remove images
 during an MCU flash. Verify the selected filename and SHA256 every time;
 do not assume the same menu number across devices.
+
+## Translations / Traduzioni
+
+[Guida italiana dei firmware CFS](README.it.md) | [CFS firmware guide in English](README.md) | [Parameters IT](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_IT.md) | [Parameters EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_EN.md)
