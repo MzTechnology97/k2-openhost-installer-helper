@@ -10,6 +10,14 @@
       "description": "K2OH v3.23 CFG4 EXPERIMENTAL: K2OH 0x7A; actual hub speeds 1/2/3/5 and timing 7/8; hardware testing pending; needs paired Kalico. Restore v3.22 if bus fails."
     },
     {
+      "id": "k2oh-runtime-v3.24-cfg5t-type4-experimental",
+      "filename": "cfs0_050_G32-cfs0_000_153-runtime-config-v3_24-K2OH-CFG5T-TYPE4-EXPERIMENTAL.bin",
+      "sha256": "78c83416afaa4795de8a018533aea884f4def396f4829cc98c77fcce48155a55",
+      "hardware": "cfs0_050_G32",
+      "application": "cfs0_000_153",
+      "description": "K2OH v3.24 CFG5T TYPE4 LIVE EXPERIMENTAL (first supervised hardware test; paired Kalico needed, keep CFG4 rollback)"
+    },
+    {
       "id": "k2-cfs-runtime-config-v3.22-readonly-probe-experimental",
       "filename": "cfs0_050_G32-cfs0_000_153-runtime-config-v3_22-READONLY-DIAG-EXPERIMENTAL.bin",
       "sha256": "40dbaad88de7b6f9435592fa03b081e9b96663a9e84896b1ad8021a8f13cf8c7",
