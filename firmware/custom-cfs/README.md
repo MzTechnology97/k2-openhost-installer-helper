@@ -64,3 +64,17 @@ do not assume the same menu number across devices.
 ## Translations / Traduzioni
 
 [Guida italiana dei firmware CFS](README.it.md) | [CFS firmware guide in English](README.md) | [Parameters IT](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_IT.md) | [Parameters EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_EN.md)
+
+## CFG5T type-4 supervised firmware test (v3.24)
+
+The experimental CFG5T candidate is published with an exact SHA-256 and is **not yet qualified on physical hardware**. It includes the effective stock hooks for feed timeout ID20, odometer stall ID22, and a selective type-4 odometer accounting gate when the FM15L013 secure element is missing. The legacy type-7 path is preserved.
+
+- Firmware: [CFG5T build, source, tests, bilingual notes](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.24-cfg5t)
+- Expected SHA-256: `78c83416afaa4795de8a018533aea884f4def396f4829cc98c77fcce48155a55`
+- Identity: `K2OH / v323-cfg5t / features 0xE5`
+- Paired Kalico: `feat/cfg5-type4-id20-id22-lab`; initial bus verification should be performed before deploying its new extra.
+- Keep CFG4 and v3.22 images for recovery. Only use the experimental CFS menu with the printer idle.
+
+An image listed in the manifest is only selectable if its verified BIN exists locally under firmware/custom-cfs. No firmware is auto-downloaded or auto-flashed.
+
+[Guida italiana](README.it.md) | [English type4 validation](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.24-cfg5t/VALIDATION_EN.md)
