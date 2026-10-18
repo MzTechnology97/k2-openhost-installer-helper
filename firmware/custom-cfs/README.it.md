@@ -45,3 +45,19 @@ Il firmware sperimentale CFG5T è pubblicato con SHA-256 verificato, ma **non è
 Il manifest non scarica automaticamente i BIN: il file corretto deve essere già nella cartella firmware/custom-cfs dell'Helper.
 
 [English instructions](README.md) | [Validazione italiana](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.24-cfg5t/VALIDATION_IT.md)
+
+
+## CFG6 v3.25 — prova hardware supervisionata
+
+La CFG6 sperimentale aggiunge 15 parametri effettivi rispetto alla CFG5T (23 scrivibili, 5 sola lettura), mantenendo la contabilizzazione residuo type 4. Non è una release qualificata per produzione: è destinata esclusivamente a una prima prova hardware controllata, con stampante inattiva.
+
+- Selezionare `experimental-cfs` nell'Helper e la voce **CFG6 v3.25** (terza candidata nel manifest corrente).
+- Il BIN è `cfs0_050_G32-cfs0_000_153-runtime-config-v3_25-K2OH-CFG6-EXPERIMENTAL.bin`.
+- SHA256: `6579eb552210d6b2b84fbbbdf2749bc8d310b324ffb095cf9662e7cd0acc6cc6`.
+- Firma firmware: `K2OH`, revisione `v323-cfg6`, API2, feature `0xE3`.
+- Conservare la CFG5T e la v3.22 per il ripristino.
+- Al primo avvio lasciare `auto_apply: False` in `box.cfg`, controllare bus RS-485, enumerazione motori X/Y e lettura CFS. Abilitare gli override soltanto dopo le verifiche.
+
+Il manifest verifica nome, hardware/applicazione e SHA256; non scarica né installa il BIN automaticamente.
+
+[Dettagli firmware in italiano](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.25-cfg6-lab/README.it.md) | [English instructions](README.md)
