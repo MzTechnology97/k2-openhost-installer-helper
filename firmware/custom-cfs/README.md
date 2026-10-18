@@ -78,3 +78,19 @@ The experimental CFG5T candidate is published with an exact SHA-256 and is **not
 An image listed in the manifest is only selectable if its verified BIN exists locally under firmware/custom-cfs. No firmware is auto-downloaded or auto-flashed.
 
 [Guida italiana](README.it.md) | [English type4 validation](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.24-cfg5t/VALIDATION_EN.md)
+
+
+## CFG6 v3.25 — supervised hardware testing
+
+Experimental CFG6 adds 15 effective stock runtime parameters over CFG5T (23 writable and 5 read-only), retaining stock type-4 filament accounting. It is not production qualified and should only be tested with the printer idle and a working rollback image available.
+
+- Use the Helper `experimental-cfs` menu and select **CFG6 v3.25** (third manifest candidate).
+- Image: `cfs0_050_G32-cfs0_000_153-runtime-config-v3_25-K2OH-CFG6-EXPERIMENTAL.bin`.
+- SHA-256: `6579eb552210d6b2b84fbbbdf2749bc8d310b324ffb095cf9662e7cd0acc6cc6`.
+- Identity: `K2OH`, revision `v323-cfg6`, API2 features `0xE3`.
+- Keep CFG5T and v3.22 as recovery options.
+- On first boot keep `auto_apply: False` in `box.cfg`; verify RS-485, X/Y motor discovery, and read-only CFS before enabling custom values.
+
+The manifest validates board/application filename and SHA256; it does not auto-download or flash the image.
+
+[Source and firmware guide EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.25-cfg6-lab/README.md) | [Guida IT](README.it.md)
