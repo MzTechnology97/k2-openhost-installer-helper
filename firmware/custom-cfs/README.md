@@ -2,9 +2,29 @@
 
 I use this directory for the installer manifest of my experimental CFS firmware. Firmware binaries remain outside this repository and are published in the dedicated [k2-cfs-rfid-tools firmware tree](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware).
 
+## Current candidate: v3.22 (installed on the reference printer)
+
+The first candidate in the manifest is **v3.22** (`0xD7`), the image the reference CFS runs.
+
+- **What it is:** v3.21 plus four read-only diagnostic GET IDs.
+- **Use so far:** installed since 2026-10-10. It has run two complete 30 h prints with automatic runout swaps (2026-10-14/15 and 2026-10-16/17).
+- **Still experimental:** the MCU-side motor-activity guard is open ([k2-cfs-rfid-tools #9](https://github.com/MzTechnology97/k2-cfs-rfid-tools/issues/9)).
+- **Kalico pairing:** use it with Kalico `k2-pro-openhost` from #80 or later. Kalico skips auto-apply, and allows a manual SET only on IDs 7 and 8, the only ones connected to the stock code.
+
+Get the BIN from [k2-cfs-rfid-tools/firmware/v3.22-readonly-state-probes](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.22-readonly-state-probes):
+
+```bash
+cp /path/to/k2-cfs-rfid-tools/firmware/v3.22-readonly-state-probes/cfs0_050_G32-cfs0_000_153-runtime-config-v3_22-READONLY-DIAG-EXPERIMENTAL.bin ./firmware/custom-cfs/
+sha256sum firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-runtime-config-v3_22-READONLY-DIAG-EXPERIMENTAL.bin
+# expected: 40dbaad88de7b6f9435592fa03b081e9b96663a9e84896b1ad8021a8f13cf8c7
+./helper.sh experimental-cfs
+```
+
+The v3.19 and v3.13 entries below stay in the manifest. v3.13 is the rollback.
+
 ## Experimental v3.19 volatile-RAM bench (2026-10-10)
 
-The first candidate in the installer manifest is **v3.19**, an experimental K2 Pro CFS firmware designed for controlled runtime-configuration tests. It is **not** a production firmware and must not be used for load/unload or RFID motion testing. The original v3.13 remains the second candidate for rollback. Real-hardware validation now confirms all **28 GET** values, all **21/21** advanced-ID SET → GET → RESET cycles, four simultaneous overrides, RESET ALL restoring **28/28** defaults, 60 full-catalogue read sweeps (1,680 GET) and successful reconnection after restarting Klipper only. The Kalico host also rejected five protected/out-of-range commands without altering CFS values. **A real CFS electrical power-cycle was subsequently validated:** the T113 controller cut the MCU rail for 2 seconds, ID 18 reset from the temporary value 405 to its ROM default 400 without a RESET command, and all 28 values were restored. Startup required a read-only re-probe after one CFS timeout and the motor controller initialized successfully on retry 2. Repeated cycles and physical CFS motor/RFID motion remain unvalidated.** Refer to [hardware evidence](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.19-volatile-ram/hardware-validation-2026-10-10.json).
+The v3.19 candidate in the installer manifest is an experimental K2 Pro CFS firmware designed for controlled runtime-configuration tests. It is **not** a production firmware and must not be used for load/unload or RFID motion testing. The original v3.13 remains the second candidate for rollback. Real-hardware validation now confirms all **28 GET** values, all **21/21** advanced-ID SET → GET → RESET cycles, four simultaneous overrides, RESET ALL restoring **28/28** defaults, 60 full-catalogue read sweeps (1,680 GET) and successful reconnection after restarting Klipper only. The Kalico host also rejected five protected/out-of-range commands without altering CFS values. **A real CFS electrical power-cycle was subsequently validated:** the T113 controller cut the MCU rail for 2 seconds, ID 18 reset from the temporary value 405 to its ROM default 400 without a RESET command, and all 28 values were restored. Startup required a read-only re-probe after one CFS timeout and the motor controller initialized successfully on retry 2. Repeated cycles and physical CFS motor/RFID motion remain unvalidated.** Refer to [hardware evidence](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.19-volatile-ram/hardware-validation-2026-10-10.json).
 
 The helper intentionally does **not** version or download firmware binaries: to install the exact v3.19 file, get it from [k2-cfs-rfid-tools/firmware/v3.19-volatile-ram](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.19-volatile-ram), then copy it to this directory.
 
