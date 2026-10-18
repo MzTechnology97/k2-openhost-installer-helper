@@ -1,142 +1,62 @@
-# Custom CFS firmware
+# Custom CFS firmware in the K2-OpenHost Helper
 
-I use this directory for the installer manifest of my experimental CFS firmware. Firmware binaries remain outside this repository and are published in the dedicated [k2-cfs-rfid-tools firmware tree](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware).
+The Helper's manifest is a **selection and SHA-256 allowlist**, not a
+source of firmware. Proprietary/manufacturer-derived BIN images are not
+stored in this Helper repository (see .gitignore). Images are published
+by the dedicated firmware project. Select an image only after its file
+has been placed in this directory with exactly its original filename.
 
-## Current candidate: v3.22 (installed on the reference printer)
+## Current curated images
 
-The first candidate in the manifest is **v3.22** (`0xD7`), the image the reference CFS runs.
+1. **K2OH v3.23 CFG4 — experimental, hardware not qualified**.
+   K2OH identity through command 0x7A, original G32/app153.
+   Matching Kalico required for startup-only CFG parameters. Only
+   IDs 1, 2, 3, 5, 7, 8 are genuinely modifiable in this build.
+   SHA256: 118f34118edeb1e3d4ac018445b3fb839f8762b9d762bbfc011e62861fe8f71b.
+2. **v3.22** — previously tested recovery image, retain its exact
+   SHA256: 40dbaad88de7b6f9435592fa03b081e9b96663a9e84896b1ad8021a8f13cf8c7.
+3. **v3.13** — legacy patched stock application.
+4. **v3.12** — earlier hardware-validated RFID release.
 
-- **What it is:** v3.21 plus four read-only diagnostic GET IDs.
-- **Use so far:** installed since 2026-10-10. It has run two complete 30 h prints with automatic runout swaps (2026-10-14/15 and 2026-10-16/17).
-- **Still experimental:** the MCU-side motor-activity guard is open ([k2-cfs-rfid-tools #9](https://github.com/MzTechnology97/k2-cfs-rfid-tools/issues/9)).
-- **Kalico pairing:** use it with Kalico `k2-pro-openhost` from #80 or later. Kalico skips auto-apply, and allows a manual SET only on IDs 7 and 8, the only ones connected to the stock code.
+Earlier v3.3/v3.6–v3.11 and v3.19 bench images were removed
+**from the active menu only**. Historical sources, experiment records
+and Git history are retained in the firmware repository.
 
-Get the BIN from [k2-cfs-rfid-tools/firmware/v3.22-readonly-state-probes](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.22-readonly-state-probes):
+The v3.23 image is published at:
 
-```bash
-cp /path/to/k2-cfs-rfid-tools/firmware/v3.22-readonly-state-probes/cfs0_050_G32-cfs0_000_153-runtime-config-v3_22-READONLY-DIAG-EXPERIMENTAL.bin ./firmware/custom-cfs/
-sha256sum firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-runtime-config-v3_22-READONLY-DIAG-EXPERIMENTAL.bin
-# expected: 40dbaad88de7b6f9435592fa03b081e9b96663a9e84896b1ad8021a8f13cf8c7
-./helper.sh experimental-cfs
-```
+https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.23-k2oh/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin
 
-The v3.19 and v3.13 entries below stay in the manifest. v3.13 is the rollback.
+To stage the matching image, from the Helper root on CM5:
 
-## Experimental v3.19 volatile-RAM bench (2026-10-10)
+    curl -fL --retry 3 -o firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin       https://raw.githubusercontent.com/MzTechnology97/k2-cfs-rfid-tools/main/firmware/v3.23-k2oh/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin
 
-The v3.19 candidate in the installer manifest is an experimental K2 Pro CFS firmware designed for controlled runtime-configuration tests. It is **not** a production firmware and must not be used for load/unload or RFID motion testing. The original v3.13 remains the second candidate for rollback. Real-hardware validation now confirms all **28 GET** values, all **21/21** advanced-ID SET → GET → RESET cycles, four simultaneous overrides, RESET ALL restoring **28/28** defaults, 60 full-catalogue read sweeps (1,680 GET) and successful reconnection after restarting Klipper only. The Kalico host also rejected five protected/out-of-range commands without altering CFS values. **A real CFS electrical power-cycle was subsequently validated:** the T113 controller cut the MCU rail for 2 seconds, ID 18 reset from the temporary value 405 to its ROM default 400 without a RESET command, and all 28 values were restored. Startup required a read-only re-probe after one CFS timeout and the motor controller initialized successfully on retry 2. Repeated cycles and physical CFS motor/RFID motion remain unvalidated.** Refer to [hardware evidence](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.19-volatile-ram/hardware-validation-2026-10-10.json).
+Verify it **before** choosing it in the menu:
 
-The helper intentionally does **not** version or download firmware binaries: to install the exact v3.19 file, get it from [k2-cfs-rfid-tools/firmware/v3.19-volatile-ram](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.19-volatile-ram), then copy it to this directory.
+    sha256sum firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin
 
-```bash
-cp /path/to/k2-cfs-rfid-tools/firmware/v3.19-volatile-ram/cfs0_050_G32-cfs0_000_153-runtime-config-v3_19-VOLATILE-RAM-BENCH.bin ./firmware/custom-cfs/
-sha256sum firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-runtime-config-v3_19-VOLATILE-RAM-BENCH.bin
-# expected: 6af3ac668f36a81f9d403f10bacfa2124737574307049d502bd2ba44ca959f74
-./helper.sh experimental-cfs
-```
+The expected digest is listed above and in manifest.json. The menu
+checks the file and digest a second time.
 
-Interactive menu 40 still requires the explicit `FLASH EXPERIMENTAL CFS` confirmation. The helper checks the exact SHA and boot/application identity, and delegates writes to Creality `mcu_util_485`; the menu never flashes automatically. **First boot: run only the read-only `verify_v319_readonly.py` from k2-cfs-rfid-tools**, with the companion updated Kalico extra.
+    K2OH_NO_UPDATE_CHECK=1 ./helper.sh experimental-cfs
 
-For v3.19, Kalico intentionally disables automatic runtime SET and bulk APPLY; manual advanced writes are meant exclusively for supervised bench testing. Avoid firmware from other CFS generations or different boot tokens.
+The Helper **requires the exact interactive FLASH EXPERIMENTAL CFS
+acknowledgement**. --yes does not bypass it. The T113 Bootstrap verifies
+the target hardware, APP header CRC16 and size, initial MSP, reset vector,
+upload hash and update result. The normal Creality update menu is
+separate. Keep the exact v3.22 firmware available to restore bus
+communications if an experimental image fails.
 
-## Historical candidate: v3.3 / API7 stock capture
+K2OH parameters are supported only by the paired modified CFS firmware
+published in k2-cfs-rfid-tools. Creality stock and arbitrary firmware
+(including the independent OpenCFS family identified as OCFS) do not
+support these K2OH CFG4 writes. Full parameter guide:
 
-The current manifest-approved image is:
+https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_IT.md
 
-```text
-filename:
-cfs0_050_G32-cfs0_000_153-rfid-stockcapture-v3_3.bin
+## Important local-installation note
 
-hardware:
-cfs0_050_G32
-
-source application:
-cfs0_000_153
-
-size:
-176744 bytes
-
-CFS container CRC16:
-0x97E9
-
-SHA-256:
-5bab3acff49253a54089e779ea473d2cf587db09ab0d9c07c4d6c2e31b810388
-```
-
-I **hardware-validated this candidate on my K2 Pro**. It exposes diagnostic API7 and keeps Creality's original RFID task as the RF owner. For Bambu fallback it temporarily substitutes the derived sector-1 Key A at the original stock authentication calls and captures only block 4 material detail plus block 5 RGBA into scratch records.
-
-It does **not** expose tag writes, UID mutation, sector-trailer writes, OTP/lock writes or EEPROM writes, and the API7 Bambu path does not use direct host RF.
-
-During my hardware validation on 2026-10-07 I successfully identified a real Bambu Lab tag as:
-
-```text
-UID       233A111D
-ATQA      0400
-SAK       08
-material  PLA
-detail    PLA Matte
-colour    #FFFFFF
-```
-
-I also validated the automatic path:
-
-```text
-Creality stock read -> unknown -> API7 Bambu fallback -> Bambulab PLA Matte / #FFFFFF
-```
-
-The CFS remains the source of the slot's remaining-filament percentage. API7 v3.3 intentionally does not capture Bambu block 14 and does not write usage back to the tag.
-
-## Get the binary
-
-Download the exact file from:
-
-```text
-https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.3-stockcapture
-```
-
-Place it next to this manifest:
-
-```text
-firmware/custom-cfs/
-├── manifest.json
-└── cfs0_050_G32-cfs0_000_153-rfid-stockcapture-v3_3.bin
-```
-
-Verify the SHA-256 before flashing.
-
-## Guarded command
-
-From the repository root on the CM5:
-
-```bash
-./helper.sh t113 mcu-fw apply --cfs \
-  --cfs-image ./firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-rfid-stockcapture-v3_3.bin \
-  --cfs-sha256 5bab3acff49253a54089e779ea473d2cf587db09ab0d9c07c4d6c2e31b810388
-```
-
-The helper verifies the image on the CM5, checks its hardware/application identity, uploads it to the T113, verifies it again there, stops Klipper only after those checks, and delegates the actual flash to Creality's stock `mcu_update / mcu_util_485` path.
-
-Do not rename the image arbitrarily: the filename is part of the guarded application-identity checks.
-
-### Bootstrap dependency
-
-Use T113 bootstrap 0.1.2 or later. The guarded path validates the CFS container metadata, declared application length, CRC16, initial MSP/reset vector and the targeted update result before considering the operation successful.
-
-## Interactive menu
-
-The installer exposes manifest-approved images under:
-
-```text
-[Experimental]
-40) Experimental CFS firmware
-```
-
-Menu 40 verifies the local binary SHA-256 and target identity, displays the firmware-risk disclaimer, and requires the exact acknowledgement:
-
-```text
-FLASH EXPERIMENTAL CFS
-```
-
-The acknowledgement is never bypassed by `--yes`.
-
-A binary is not selectable until it is both present locally in this directory and approved by `manifest.json`.
+Existing CM5 instances can have additional **locally staged** OpenCFS
+INERT/BENCH images or different menu ordering. Updating this repository
+is not permission to overwrite the local manifest or remove images
+during an MCU flash. Verify the selected filename and SHA256 every time;
+do not assume the same menu number across devices.
