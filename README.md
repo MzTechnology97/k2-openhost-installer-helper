@@ -265,15 +265,17 @@ The printer's own T113 board runs the USB gadget bridges to this host. The boots
 2. stages it in slot B and shows which boards would change;
 3. flashes **only if you answer yes**, with Creality's own tools, after checking that Klipper on this host is stopped (`sudo systemctl stop klipper`).
 
-For a **custom CFS image that intentionally keeps the same application version**, the file remains on the CM5 until the guarded flash path verifies and transfers it to the T113. The current manifest-approved candidate is the hardware-validated **RFID v3.3 / API7 stock-capture** build for `cfs0_050_G32` + `cfs0_000_153`. The binary and its validation metadata are published in the dedicated [k2-cfs-rfid-tools v3.3 firmware directory](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.3-stockcapture).
+For a **custom CFS image that intentionally keeps the same application version**, the file remains on the CM5 until the guarded flash path verifies and transfers it to the T113. The current curated CFS firmware menu includes the **experimental K2OH v3.23 CFG4** build (not yet hardware-qualified), the **v3.22 recovery image**, and legacy v3.13/v3.12 candidates. Older releases are retained only in firmware-project history. Configuration writes are compatible solely with the matching modified firmware distributed by k2-cfs-rfid-tools; OpenCFS is detected separately but does not receive CFG4 SET.
 
-Example:
+Example for the explicitly selected experimental image, after downloading it to the CM5 and checking its SHA-256:
 
 ```bash
 ./helper.sh t113 mcu-fw apply --cfs \
-  --cfs-image ./firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-rfid-stockcapture-v3_3.bin \
-  --cfs-sha256 5bab3acff49253a54089e779ea473d2cf587db09ab0d9c07c4d6c2e31b810388
+  --cfs-image ./firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin \
+  --cfs-sha256 118f34118edeb1e3d4ac018445b3fb839f8762b9d762bbfc011e62861fe8f71b
 ```
+
+[Italiano — menu CFS](firmware/custom-cfs/README.it.md) | [English menu](firmware/custom-cfs/README.md) | [Parameters EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_EN.md).
 
 In this mode `--cfs-image` is a **CM5-local path**. Before touching the bus, the helper:
 
