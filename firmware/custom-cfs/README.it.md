@@ -31,3 +31,17 @@ Il menu confronta nome hardware/applicazione e SHA-256, verifica i prerequisiti 
 **Compatibilità:** i valori CFG4 si applicano solo alla build K2-OpenHost abbinata, distribuita da k2-cfs-rfid-tools. Firmware Creality stock, firmware non verificati e OpenCFS non accettano questi SET. OpenCFS deve comunque essere identificato separatamente da Kalico con firma `OCFS`.
 
 [Guida parametri IT](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_IT.md) | [Parameter guide EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_EN.md) | [English Helper guide](README.md)
+
+## Prova supervisionata del firmware CFG5T type 4 (v3.24)
+
+Il firmware sperimentale CFG5T è pubblicato con SHA-256 verificato, ma **non è ancora qualificato su hardware reale**. Introduce gli hook operativi per ID20 (timeout feed), ID22 (stallo odometro) e il task di conteggio type 4 selettivo quando manca FM15L013, preservando il comportamento type 7.
+
+- [Firmware CFG5T, sorgenti, test e guide IT/EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.24-cfg5t)
+- SHA-256: `78c83416afaa4795de8a018533aea884f4def396f4829cc98c77fcce48155a55`
+- Identità: `K2OH / v323-cfg5t / feature 0xE5`
+- Extra Kalico abbinato: ramo `feat/cfg5-type4-id20-id22-lab`. Prima controllare bus RS-485, stepper X/Y e identità CFS; soltanto dopo aggiornare l'extra.
+- Conservare CFG4 e v3.22 come ripristino. Flash sperimentale soltanto con stampante inattiva.
+
+Il manifest non scarica automaticamente i BIN: il file corretto deve essere già nella cartella firmware/custom-cfs dell'Helper.
+
+[English instructions](README.md) | [Validazione italiana](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.24-cfg5t/VALIDATION_IT.md)
