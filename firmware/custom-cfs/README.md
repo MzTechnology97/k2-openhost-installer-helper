@@ -1,96 +1,35 @@
-# Custom CFS firmware in the K2-OpenHost Helper
+# Current custom CFS firmware — K2OH CFG6 RDG2
 
-The Helper's manifest is a **selection and SHA-256 allowlist**, not a
-source of firmware. Proprietary/manufacturer-derived BIN images are not
-stored in this Helper repository (see .gitignore). Images are published
-by the dedicated firmware project. Select an image only after its file
-has been placed in this directory with exactly its original filename.
+The manifest offers one image: **K2OH CFG6 RDG2**, working on the reference K2 Pro / CFS G32 configuration tested on **28 October 2026**. Old images and experimental tests are removed from the firmware repository's active tree and remain recoverable in Git history.
 
-## Current curated images
+| Field | Value |
+|---|---|
+| File | `cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin` |
+| SHA-256 | `7d611c5845d3c248cf55f57972fdc7fab1761d0e281bcbf70030ac97e458023f` |
+| Size | 179976 bytes |
+| Hardware / app | `cfs0_050_G32 / cfs0_000_153` |
+| Internal identity | `K2OH / v323-cfg6`, API2 features `0xE3` |
+| Menu | 40 → single current candidate |
 
-1. **K2OH v3.23 CFG4 — experimental, hardware not qualified**.
-   K2OH identity through command 0x7A, original G32/app153.
-   Matching Kalico required for startup-only CFG parameters. Only
-   IDs 1, 2, 3, 5, 7, 8 are genuinely modifiable in this build.
-   SHA256: 118f34118edeb1e3d4ac018445b3fb839f8762b9d762bbfc011e62861fe8f71b.
-2. **v3.22** — previously tested recovery image, retain its exact
-   SHA256: 40dbaad88de7b6f9435592fa03b081e9b96663a9e84896b1ad8021a8f13cf8c7.
-3. **v3.13** — legacy patched stock application.
-4. **v3.12** — earlier hardware-validated RFID release.
+This is byte-identical to the tested RDG2 build: Bambu RFID, valid type4 runtime, increasing MCU consumption and direct CFS percentage **39% → 38% → 34%**, with 17.113 m counted and no RS-485 errors across 31548 exchanges. Other tag formats and unload/reread cycles remain to be validated. [Evidence and limits](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFG6_RDG2_VALIDATION.md).
 
-Earlier v3.3/v3.6–v3.11 and v3.19 bench images were removed
-**from the active menu only**. Historical sources, experiment records
-and Git history are retained in the firmware repository.
+## Stage and install
 
-The v3.23 image is published at:
+The Helper repository does not version BIN images. Download the current file from the firmware repository:
 
-https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.23-k2oh/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin
+```sh
+cd ~/k2-openhost-installer-helper
+curl -fL --retry 3 -o firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin https://raw.githubusercontent.com/MzTechnology97/k2-cfs-rfid-tools/main/firmware/cfg6-rdg2/cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin
+sha256sum firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin
+K2OH_NO_UPDATE_CHECK=1 ./helper.sh experimental-cfs
+```
 
-To stage the matching image, from the Helper root on CM5:
+Compare the SHA above before selecting the file. The menu checks the hardware/app filename and hash again and requires the exact `FLASH EXPERIMENTAL CFS` acknowledgement; `--yes` cannot bypass it. Flash only with the printer fully idle and a separately retained verified recovery image. This remains in the experimental menu, separate from normal Creality MCU updates.
 
-    curl -fL --retry 3 -o firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin       https://raw.githubusercontent.com/MzTechnology97/k2-cfs-rfid-tools/main/firmware/v3.23-k2oh/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin
+OEM/CFG identity is shared with earlier builds: identify RDG2 by filename and SHA, not only the displayed version. The manifest selects and verifies local files; it neither downloads nor automatically flashes them. This cleanup does not delete local recovery copies.
 
-Verify it **before** choosing it in the menu:
+## Paired host and diagnostics
 
-    sha256sum firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin
+Use the matching K2-OpenHost Kalico integration. The `box_rfid_diag.py` reader in the [firmware repository](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/host/kalico) adds `BOX_CFS_DIAG2 ADDRESS=1 SLOT=3`, one read-only request for physical slot4 through the existing RS-485 owner/queue. Update the module and restart the Klipper service only when idle. Do not open the serial device from a second program while Klipper owns it.
 
-The expected digest is listed above and in manifest.json. The menu
-checks the file and digest a second time.
-
-    K2OH_NO_UPDATE_CHECK=1 ./helper.sh experimental-cfs
-
-The Helper **requires the exact interactive FLASH EXPERIMENTAL CFS
-acknowledgement**. --yes does not bypass it. The T113 Bootstrap verifies
-the target hardware, APP header CRC16 and size, initial MSP, reset vector,
-upload hash and update result. The normal Creality update menu is
-separate. Keep the exact v3.22 firmware available to restore bus
-communications if an experimental image fails.
-
-K2OH parameters are supported only by the paired modified CFS firmware
-published in k2-cfs-rfid-tools. Creality stock and arbitrary firmware
-(including the independent OpenCFS family identified as OCFS) do not
-support these K2OH CFG4 writes. Full parameter guide:
-
-https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_IT.md
-
-## Important local-installation note
-
-Existing CM5 instances can have additional **locally staged** OpenCFS
-INERT/BENCH images or different menu ordering. Updating this repository
-is not permission to overwrite the local manifest or remove images
-during an MCU flash. Verify the selected filename and SHA256 every time;
-do not assume the same menu number across devices.
-
-## Translations / Traduzioni
-
-[Guida italiana dei firmware CFS](README.it.md) | [CFS firmware guide in English](README.md) | [Parameters IT](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_IT.md) | [Parameters EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_EN.md)
-
-## CFG5T type-4 supervised firmware test (v3.24)
-
-The experimental CFG5T candidate is published with an exact SHA-256 and is **not yet qualified on physical hardware**. It includes the effective stock hooks for feed timeout ID20, odometer stall ID22, and a selective type-4 odometer accounting gate when the FM15L013 secure element is missing. The legacy type-7 path is preserved.
-
-- Firmware: [CFG5T build, source, tests, bilingual notes](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.24-cfg5t)
-- Expected SHA-256: `78c83416afaa4795de8a018533aea884f4def396f4829cc98c77fcce48155a55`
-- Identity: `K2OH / v323-cfg5t / features 0xE5`
-- Paired Kalico: `feat/cfg5-type4-id20-id22-lab`; initial bus verification should be performed before deploying its new extra.
-- Keep CFG4 and v3.22 images for recovery. Only use the experimental CFS menu with the printer idle.
-
-An image listed in the manifest is only selectable if its verified BIN exists locally under firmware/custom-cfs. No firmware is auto-downloaded or auto-flashed.
-
-[Guida italiana](README.it.md) | [English type4 validation](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.24-cfg5t/VALIDATION_EN.md)
-
-
-## CFG6 v3.25 — supervised hardware testing
-
-Experimental CFG6 adds 15 effective stock runtime parameters over CFG5T (23 writable and 5 read-only), retaining stock type-4 filament accounting. It is not production qualified and should only be tested with the printer idle and a working rollback image available.
-
-- Use the Helper `experimental-cfs` menu and select **CFG6 v3.25** (third manifest candidate).
-- Image: `cfs0_050_G32-cfs0_000_153-runtime-config-v3_25-K2OH-CFG6-EXPERIMENTAL.bin`.
-- SHA-256: `6579eb552210d6b2b84fbbbdf2749bc8d310b324ffb095cf9662e7cd0acc6cc6`.
-- Identity: `K2OH`, revision `v323-cfg6`, API2 features `0xE3`.
-- Keep CFG5T and v3.22 as recovery options.
-- On first boot keep `auto_apply: False` in `box.cfg`; verify RS-485, X/Y motor discovery, and read-only CFS before enabling custom values.
-
-The manifest validates board/application filename and SHA256; it does not auto-download or flash the image.
-
-[Source and firmware guide EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.25-cfg6-lab/README.md) | [Guida IT](README.it.md)
+[Firmware overview](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/README.md) · [Parameters](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_EN.md) · [Italiano](README.it.md).

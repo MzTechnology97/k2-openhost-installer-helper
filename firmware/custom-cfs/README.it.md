@@ -1,63 +1,35 @@
-# Firmware CFS personalizzati — Helper K2-OpenHost
+# Firmware CFS corrente — K2OH CFG6 RDG2
 
-Questa cartella contiene il **manifest delle immagini autorizzate e le impronte SHA-256**. I firmware BIN non vengono salvati nella repository dell'Helper: vengono pubblicati nella [repository firmware CFS](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware).
+Il manifest propone una sola immagine: **K2OH CFG6 RDG2**, funzionante sulla configurazione di riferimento K2 Pro / CFS G32 verificata il **28 ottobre 2026**. Le vecchie immagini e i test sperimentali sono rimossi dal ramo attivo della repository firmware e rimangono recuperabili nella cronologia Git.
 
-## Candidati attuali
+| Campo | Valore |
+|---|---|
+| File | `cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin` |
+| SHA-256 | `7d611c5845d3c248cf55f57972fdc7fab1761d0e281bcbf70030ac97e458023f` |
+| Dimensione | 179976 byte |
+| Hardware / app | `cfs0_050_G32 / cfs0_000_153` |
+| Identita interna | `K2OH / v323-cfg6`, API2, feature `0xE3` |
+| Menu | 40 → unica voce corrente |
 
-1. **K2OH v3.23 CFG4 — SPERIMENTALE**: firmware modificato G32/app153, identità RS-485 `K2OH` con `0x7A`, revisione `v323-cfg4`, 28 parametri esposti; soltanto gli ID 1/2/3/5/7/8 sono realmente modificabili all'avvio da Kalico. Build non ancora qualificata su hardware reale.
-2. **v3.22 — RIPRISTINO**: mantenere il BIN originale verificato, SHA-256 `40dbaad88de7b6f9435592fa03b081e9b96663a9e84896b1ad8021a8f13cf8c7`.
-3. **v3.13**: firmware modificato legacy.
-4. **v3.12**: firmware RFID precedente, validato su hardware.
+Il BIN e identico alla build RDG2 provata: RFID Bambu, runtime type4 valido, consumo MCU in crescita e percentuale diretta **39% → 38% → 34%** con 17,113 m conteggiati; nessun errore RS-485 nella sessione di 31548 scambi. Questo riscontro non qualifica ogni formato di tag o il ciclo scarico/rilettura. [Evidenze e limiti](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFG6_RDG2_VALIDATION.md).
 
-Le vecchie versioni RFID v3.3–v3.11 e i firmware sperimentali v3.19–v3.21 sono stati eliminati **soltanto dal menu principale dell'Helper**. I file storici, le prove e i sorgenti restano recuperabili nella repository firmware e nella cronologia Git.
+## Preparazione e installazione
 
-## Installazione e controllo
+I BIN non sono versionati nella repository Helper. Scaricare il file corrente dalla repository firmware:
 
-Scaricare prima sul CM5 il BIN esatto dalla repository firmware e posizionarlo nella cartella `firmware/custom-cfs`. Verificare lo SHA-256 indicato nel manifest; per la v3.23 è:
+```sh
+cd ~/k2-openhost-installer-helper
+curl -fL --retry 3 -o firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin https://raw.githubusercontent.com/MzTechnology97/k2-cfs-rfid-tools/main/firmware/cfg6-rdg2/cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin
+sha256sum firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin
+K2OH_NO_UPDATE_CHECK=1 ./helper.sh experimental-cfs
+```
 
-    118f34118edeb1e3d4ac018445b3fb839f8762b9d762bbfc011e62861fe8f71b
+Confrontare lo SHA con la tabella prima della selezione. Il menu verifica a sua volta nome hardware/app e hash e richiede la frase esatta `FLASH EXPERIMENTAL CFS`; `--yes` non salta la conferma. Eseguire il flash soltanto con stampante del tutto inattiva e una copia di recupero verificata disponibile separatamente. L'operazione resta nel menu sperimentale; l'aggiornamento stock Creality rimane distinto.
 
-Il percorso del firmware è:
+Le firme OEM/CFG sono condivise con vecchie build: per identificare RDG2 usare il filename e lo SHA, non soltanto la versione mostrata dalla stampante. Il manifest seleziona e verifica file locali; non li scarica e non esegue flash automaticamente. Le copie locali di recupero non vengono eliminate da questa pulizia.
 
-[CFS v3.23 CFG4 sperimentale](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.23-k2oh/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin)
+## Diagnostica e host abbinato
 
-Eseguire:
+Usare Kalico K2-OpenHost abbinato. Il lettore `box_rfid_diag.py` nella [repository firmware](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/host/kalico) aggiunge `BOX_CFS_DIAG2 ADDRESS=1 SLOT=3`: lettura in sola lettura dello slot fisico4 tramite la coda RS-485 esistente. Aggiornare il modulo e riavviare il servizio Klipper a stampante ferma. Non aprire la seriale da un secondo programma mentre e posseduta da Klipper.
 
-    cd ~/k2-openhost-installer-helper
-    K2OH_NO_UPDATE_CHECK=1 ./helper.sh experimental-cfs
-
-Il menu confronta nome hardware/applicazione e SHA-256, verifica i prerequisiti del T113 e richiede la conferma testuale esatta `FLASH EXPERIMENTAL CFS`. Non sono eseguiti flash automatici e `--yes` non può aggirare la conferma.
-
-**Compatibilità:** i valori CFG4 si applicano solo alla build K2-OpenHost abbinata, distribuita da k2-cfs-rfid-tools. Firmware Creality stock, firmware non verificati e OpenCFS non accettano questi SET. OpenCFS deve comunque essere identificato separatamente da Kalico con firma `OCFS`.
-
-[Guida parametri IT](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_IT.md) | [Parameter guide EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_EN.md) | [English Helper guide](README.md)
-
-## Prova supervisionata del firmware CFG5T type 4 (v3.24)
-
-Il firmware sperimentale CFG5T è pubblicato con SHA-256 verificato, ma **non è ancora qualificato su hardware reale**. Introduce gli hook operativi per ID20 (timeout feed), ID22 (stallo odometro) e il task di conteggio type 4 selettivo quando manca FM15L013, preservando il comportamento type 7.
-
-- [Firmware CFG5T, sorgenti, test e guide IT/EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.24-cfg5t)
-- SHA-256: `78c83416afaa4795de8a018533aea884f4def396f4829cc98c77fcce48155a55`
-- Identità: `K2OH / v323-cfg5t / feature 0xE5`
-- Extra Kalico abbinato: ramo `feat/cfg5-type4-id20-id22-lab`. Prima controllare bus RS-485, stepper X/Y e identità CFS; soltanto dopo aggiornare l'extra.
-- Conservare CFG4 e v3.22 come ripristino. Flash sperimentale soltanto con stampante inattiva.
-
-Il manifest non scarica automaticamente i BIN: il file corretto deve essere già nella cartella firmware/custom-cfs dell'Helper.
-
-[English instructions](README.md) | [Validazione italiana](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.24-cfg5t/VALIDATION_IT.md)
-
-
-## CFG6 v3.25 — prova hardware supervisionata
-
-La CFG6 sperimentale aggiunge 15 parametri effettivi rispetto alla CFG5T (23 scrivibili, 5 sola lettura), mantenendo la contabilizzazione residuo type 4. Non è una release qualificata per produzione: è destinata esclusivamente a una prima prova hardware controllata, con stampante inattiva.
-
-- Selezionare `experimental-cfs` nell'Helper e la voce **CFG6 v3.25** (terza candidata nel manifest corrente).
-- Il BIN è `cfs0_050_G32-cfs0_000_153-runtime-config-v3_25-K2OH-CFG6-EXPERIMENTAL.bin`.
-- SHA256: `6579eb552210d6b2b84fbbbdf2749bc8d310b324ffb095cf9662e7cd0acc6cc6`.
-- Firma firmware: `K2OH`, revisione `v323-cfg6`, API2, feature `0xE3`.
-- Conservare la CFG5T e la v3.22 per il ripristino.
-- Al primo avvio lasciare `auto_apply: False` in `box.cfg`, controllare bus RS-485, enumerazione motori X/Y e lettura CFS. Abilitare gli override soltanto dopo le verifiche.
-
-Il manifest verifica nome, hardware/applicazione e SHA256; non scarica né installa il BIN automaticamente.
-
-[Dettagli firmware in italiano](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/firmware/v3.25-cfg6-lab/README.it.md) | [English instructions](README.md)
+[Guida firmware IT](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/README.it.md) · [Parametri](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_IT.md) · [English](README.md).
