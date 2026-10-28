@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **HelixScreen from the K2-OpenHost fork** ([MzTechnology97/helixscreen](https://github.com/MzTechnology97/helixscreen), `1.0.6-k2oh.N`). The T113 bootstrap now downloads the fork's latest release (`helixscreen-k2-<tag>.tar.gz` and `install.sh`) instead of upstream's. The fork reads Kalico's CFS data (colours after a spool swap, tool map, remaining filament), keeps the boot wait on the host's Moonraker across updates, skips the T113 camera server, and its in-app updates come from the fork's releases.
 - **Host fan from Klipper (`install host-fan`, menu 36).** For Kalico's `[host_fan]` (kalico-k2pro #74), which drives the CM5's CPU fan (hwmon `pwmfan`, `cpu-thermal` zone). It installs:
   - `/etc/udev/rules.d/99-k2oh-host-fan.rules`: group write access to `pwm1` and to the zone's `mode`;
   - `/etc/systemd/system/klipper.service.d/k2oh-host-fan.conf`: `ExecStopPost` sets the zone back to `enabled`, so the kernel gets the fan back after a crash too;
