@@ -2,52 +2,12 @@
   "schema": 1,
   "candidates": [
     {
-      "id": "k2oh-runtime-v3.23-cfg4-experimental",
-      "filename": "cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin",
-      "sha256": "118f34118edeb1e3d4ac018445b3fb839f8762b9d762bbfc011e62861fe8f71b",
+      "id": "k2oh-cfg6-rdg2-verified-20261028",
+      "filename": "cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin",
+      "sha256": "7d611c5845d3c248cf55f57972fdc7fab1761d0e281bcbf70030ac97e458023f",
       "hardware": "cfs0_050_G32",
       "application": "cfs0_000_153",
-      "description": "K2OH v3.23 CFG4 EXPERIMENTAL: K2OH 0x7A; actual hub speeds 1/2/3/5 and timing 7/8; hardware testing pending; needs paired Kalico. Restore v3.22 if bus fails."
-    },
-    {
-      "id": "k2oh-runtime-v3.24-cfg5t-type4-experimental",
-      "filename": "cfs0_050_G32-cfs0_000_153-runtime-config-v3_24-K2OH-CFG5T-TYPE4-EXPERIMENTAL.bin",
-      "sha256": "78c83416afaa4795de8a018533aea884f4def396f4829cc98c77fcce48155a55",
-      "hardware": "cfs0_050_G32",
-      "application": "cfs0_000_153",
-      "description": "K2OH v3.24 CFG5T TYPE4 LIVE EXPERIMENTAL (first supervised hardware test; paired Kalico needed, keep CFG4 rollback)"
-    },
-    {
-      "id": "k2oh-runtime-v3.25-cfg6-advanced-experimental",
-      "filename": "cfs0_050_G32-cfs0_000_153-runtime-config-v3_25-K2OH-CFG6-EXPERIMENTAL.bin",
-      "sha256": "6579eb552210d6b2b84fbbbdf2749bc8d310b324ffb095cf9662e7cd0acc6cc6",
-      "hardware": "cfs0_050_G32",
-      "application": "cfs0_000_153",
-      "description": "K2OH v3.25 CFG6 ADVANCED EXPERIMENTAL: 23 effective IDs, 15 newly hooked; type4 usage preserved; API2 feature 0xE3. First hardware test ONLY, paired Kalico k2-pro-openhost, CFG5T/v3.22 rollback required."
-    },
-    {
-      "id": "k2-cfs-runtime-config-v3.22-readonly-probe-experimental",
-      "filename": "cfs0_050_G32-cfs0_000_153-runtime-config-v3_22-READONLY-DIAG-EXPERIMENTAL.bin",
-      "sha256": "40dbaad88de7b6f9435592fa03b081e9b96663a9e84896b1ad8021a8f13cf8c7",
-      "hardware": "cfs0_050_G32",
-      "application": "cfs0_000_153",
-      "description": "K2 CFS v3.22 EXPERIMENTAL (feature 0xD7): v3.21 plus four read-only diagnostic GET IDs 28..31. Installed on the reference printer since 2026-10-10; two complete 30 h prints with automatic runout swaps (2026-10-14/17). Runtime SET only on IDs 7/8 with the paired Kalico (kalico-k2pro #80); MCU motor-activity guard still open (k2-cfs-rfid-tools #9). Keep the v3.13 rollback."
-    },
-    {
-      "id": "k2-cfs-runtime-config-v3.13",
-      "filename": "cfs0_050_G32-cfs0_000_153-runtime-config-v3_13.bin",
-      "sha256": "9a68dd8205956dda58bc3108b265fdbc03756e70974ee9a8b1ee5afc3ce46aff",
-      "hardware": "cfs0_050_G32",
-      "application": "cfs0_000_153",
-      "description": "K2 CFS v3.13: v3.12 plus volatile runtime motion configuration API for six proven load/unload speed parameters; idle-only RAM writes; no EEPROM writes; no tag writes"
-    },
-    {
-      "id": "k2-cfs-rfid-remaining-v3.12",
-      "filename": "cfs0_050_G32-cfs0_000_153-rfid-remaining-v3_12.bin",
-      "sha256": "fe436e33a3b86339673b559d345703593e1a8e9ec3237261027e9ae48d048198",
-      "hardware": "cfs0_050_G32",
-      "application": "cfs0_000_153",
-      "description": "K2 CFS RFID v3.12: pre-geometry K2RL latch set on third API7 read success so stock geometry/type4 remaining can initialize before host CLEAR; 330m nominal; no tag writes"
+      "description": "K2OH CFG6 RDG2 - working on reference K2 Pro CFS G32 (28 Oct 2026): RFID and MCU remaining 39 -> 34 verified. Includes read-only RDG2 diagnostics; paired Kalico required. Other tag formats and unload/reread still to validate."
     }
   ]
 }
