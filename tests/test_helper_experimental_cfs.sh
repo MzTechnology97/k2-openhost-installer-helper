@@ -36,6 +36,9 @@ CUSTOM_CFS_MANIFEST="$FW_DIR/manifest.json"
 # manifest SHA and the standard custom-image arguments.
 CALLED="$TMP/called"
 run() { printf '%s\n' "$*" > "$CALLED"; }
+# Unit fixture: do not query or write the actual attached printer.
+SAVED_EXPERIMENTAL_IDLE_GUARD="$(declare -f experimental_cfs_require_idle)"
+experimental_cfs_require_idle() { :; }
 experimental_cfs_menu <<< "FLASH EXPERIMENTAL CFS" > "$TMP/out-ok" 2>&1
 [[ -f "$CALLED" ]] || fail_test "correct acknowledgement did not invoke t113 helper"
 grep -Fq "t113.sh mcu-fw apply --cfs --cfs-image $IMAGE --cfs-sha256 $SHA" "$CALLED" \
@@ -81,4 +84,29 @@ PY
 ) > "$TMP/out-badid" 2>&1 && fail_test "manifest/filename identity mismatch accepted"
 [[ ! -e "$CALLED" ]] || fail_test "t113 helper invoked with mismatched identity"
 
+# Test the actual guard with a mock HTTP response (no CM5 request).
+eval "$SAVED_EXPERIMENTAL_IDLE_GUARD"
+curl() {
+    printf '%s\n' '{"result":{"status":{"print_stats":{"state":"standby"},"box":{"state":"IDLE","operation":{"active":false}}}}}'
+}
+experimental_cfs_require_idle || fail_test "idle state should allow supervised flashing"
+curl() {
+    printf '%s\n' '{"result":{"status":{"print_stats":{"state":"printing"},"box":{"state":"PRINT","operation":{"active":true}}}}}'
+}
+( experimental_cfs_require_idle ) > "$TMP/out-printing" 2>&1 && fail_test "active print accepted by flash interlock"
+grep -Fq "Unsafe CFS flash state" "$TMP/out-printing" || fail_test "missing active-print failure"
+curl() { return 22; }
+( experimental_cfs_require_idle ) > "$TMP/out-down" 2>&1 && fail_test "unreachable Moonraker allowed flash"
+grep -Fq "Cannot prove" "$TMP/out-down" || fail_test "missing fail-closed response"
+
+# Validate the shipped menu order and exact files, independently of the mock menu.
+python3 - "$ROOT/firmware/custom-cfs" <<'CATALOG'
+import pathlib,json,hashlib,sys
+p=pathlib.Path(sys.argv[1]);rows=json.loads((p/'manifest.json').read_text())['candidates']
+assert len(rows)==2
+assert 'R3-CANDIDATE' in rows[0]['filename'] and 'RDG2.bin' in rows[1]['filename']
+for row in rows:
+    assert hashlib.sha256((p/row['filename']).read_bytes()).hexdigest()==row['sha256']
+assert rows[0]['sha256']==json.loads((p/'SGF1-RH1-R3-firmware-manifest.json').read_text())['sha256']
+CATALOG
 echo "experimental CFS menu tests: PASS"

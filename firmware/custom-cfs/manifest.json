@@ -2,6 +2,14 @@
   "schema": 1,
   "candidates": [
     {
+      "id": "k2oh-cfg6-sgf1-rh1-r3-candidate-20261029",
+      "filename": "cfs0_050_G32-cfs0_000_153-K2OH-CFG6-SGF1-RH1-R3-CANDIDATE.bin",
+      "sha256": "a6dec25c74e7d259eec0387193548a0c3cc78ec9fc4ddc35824f0fe0965385b8",
+      "hardware": "cfs0_050_G32",
+      "application": "cfs0_000_153",
+      "description": "K2OH CFG6 SGF1/RH1 R3: reference RFID, RAM vendor geometry, consumption and automatic runout swap verified. Matching Kalico required; effective Bambu core284.7 awaits repeat validation. RDG2 retained as fallback."
+    },
+    {
       "id": "k2oh-cfg6-rdg2-verified-20261028",
       "filename": "cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin",
       "sha256": "7d611c5845d3c248cf55f57972fdc7fab1761d0e281bcbf70030ac97e458023f",

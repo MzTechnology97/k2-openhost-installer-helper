@@ -1,35 +1,28 @@
-# Current custom CFS firmware — K2OH CFG6 RDG2
+# CFS G32 - CFG6 SGF1/RH1 R3
 
-The manifest offers one image: **K2OH CFG6 RDG2**, working on the reference K2 Pro / CFS G32 configuration tested on **28 October 2026**. Old images and experimental tests are removed from the firmware repository's active tree and remain recoverable in Git history.
+Menu **40** offers R3 first and the previous RDG2 image second.
+R3 is paired with [Kalico k2-pro-openhost](https://github.com/MzTechnology97/kalico-k2pro/tree/k2-pro-openhost).
 
-| Field | Value |
-|---|---|
-| File | `cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin` |
-| SHA-256 | `7d611c5845d3c248cf55f57972fdc7fab1761d0e281bcbf70030ac97e458023f` |
-| Size | 179976 bytes |
-| Hardware / app | `cfs0_050_G32 / cfs0_000_153` |
-| Internal identity | `K2OH / v323-cfg6`, API2 features `0xE3` |
-| Menu | 40 → single current candidate |
+| Image | SHA-256 | Scope |
+|---|---|---|
+| [cfs0_050_G32-cfs0_000_153-K2OH-CFG6-SGF1-RH1-R3-CANDIDATE.bin](cfs0_050_G32-cfs0_000_153-K2OH-CFG6-SGF1-RH1-R3-CANDIDATE.bin) | `a6dec25c74e7d259eec0387193548a0c3cc78ec9fc4ddc35824f0fe0965385b8` | R3,185900bytes; G32 / cfs0_000_153 |
+| RDG2 fallback | `7d611c5845d3c248cf55f57972fdc7fab1761d0e281bcbf70030ac97e458023f` | previous reference; no SGF1/RH1 geometry |
 
-This is byte-identical to the tested RDG2 build: Bambu RFID, valid type4 runtime, increasing MCU consumption and direct CFS percentage **39% → 38% → 34%**, with 17.113 m counted and no RS-485 errors across 31548 exchanges. Other tag formats and unload/reread cycles remain to be validated. [Evidence and limits](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFG6_RDG2_VALIDATION.md).
+R3 hardware evidence: Bambu PETG HF reads in slots2/4, one RH1 job each,
+UID flags0x13, RAM catalog/binding, per-UID327m lengths, consumption and
+automatic runout replacement. This does not qualify every tag/board/lifecycle.
+The filename retains CANDIDATE to preserve the exact tested artifact.
 
-## Stage and install
+Use [the conf](https://github.com/MzTechnology97/kalico-k2pro/blob/k2-pro-openhost/config/k2/macros/box_spool_profiles.cfg)
+and [the calibration procedure (Italian)](https://github.com/MzTechnology97/kalico-k2pro/blob/k2-pro-openhost/docs/CFS_SPOOL_CALIBRATION.md).
+The Bambu host profile is `bambu = 1, 284.7, 508.3` (circumferences in mm).
+The effective core comes from the first real runout and awaits repeat validation;
+it is not the physical cardboard diameter. Firmware bytes are unchanged.
+The detailed [firmware manifest](SGF1-RH1-R3-firmware-manifest.json) records scope.
 
-The Helper repository does not version BIN images. Download the current file from the firmware repository:
-
-```sh
-cd ~/k2-openhost-installer-helper
-curl -fL --retry 3 -o firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin https://raw.githubusercontent.com/MzTechnology97/k2-cfs-rfid-tools/main/firmware/cfg6-rdg2/cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin
-sha256sum firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-K2OH-CFG6-RDG2.bin
-K2OH_NO_UPDATE_CHECK=1 ./helper.sh experimental-cfs
-```
-
-Compare the SHA above before selecting the file. The menu checks the hardware/app filename and hash again and requires the exact `FLASH EXPERIMENTAL CFS` acknowledgement; `--yes` cannot bypass it. Flash only with the printer fully idle and a separately retained verified recovery image. This remains in the experimental menu, separate from normal Creality MCU updates.
-
-OEM/CFG identity is shared with earlier builds: identify RDG2 by filename and SHA, not only the displayed version. The manifest selects and verifies local files; it neither downloads nor automatically flashes them. This cleanup does not delete local recovery copies.
-
-## Paired host and diagnostics
-
-Use the matching K2-OpenHost Kalico integration. The `box_rfid_diag.py` reader in the [firmware repository](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/host/kalico) adds `BOX_CFS_DIAG2 ADDRESS=1 SLOT=3`, one read-only request for physical slot4 through the existing RS-485 owner/queue. Update the module and restart the Klipper service only when idle. Do not open the serial device from a second program while Klipper owns it.
-
-[Firmware overview](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/README.md) · [Parameters](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_EN.md) · [Italiano](README.it.md).
+Before flashing, stop printing/loading/unloading, prove printer/CFS idle and
+follow the supervised menu. Type exactly `FLASH EXPERIMENTAL CFS`.
+The host idle interlock rejects unavailable/unsafe status; it does not replace
+physical supervision. Use T113 bootstrap0.1.2+ to preserve OEM application naming.
+Enable the paired Kalico config and restart only while idle. Keep the fallback
+and OEM recovery path available; these images target only G32 / APP153.
