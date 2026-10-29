@@ -103,10 +103,12 @@ grep -Fq "Cannot prove" "$TMP/out-down" || fail_test "missing fail-closed respon
 python3 - "$ROOT/firmware/custom-cfs" <<'CATALOG'
 import pathlib,json,hashlib,sys
 p=pathlib.Path(sys.argv[1]);rows=json.loads((p/'manifest.json').read_text())['candidates']
-assert len(rows)==2
+assert len(rows)==3
 assert 'R3-CANDIDATE' in rows[0]['filename'] and 'RDG2.bin' in rows[1]['filename']
+assert 'R4-PRECISION1' in rows[2]['filename']
 for row in rows:
     assert hashlib.sha256((p/row['filename']).read_bytes()).hexdigest()==row['sha256']
 assert rows[0]['sha256']==json.loads((p/'SGF1-RH1-R3-firmware-manifest.json').read_text())['sha256']
+assert rows[2]['sha256']==json.loads((p/'SGF1-RH1-R4-PRECISION1-firmware-manifest.json').read_text())['sha256']
 CATALOG
 echo "experimental CFS menu tests: PASS"
