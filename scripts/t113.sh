@@ -41,7 +41,8 @@ TESTED_FIRMWARE="1.1.0.94"
 # Only the K2 Pro is supported: Creality model F012 on board CR0CN200400C10.
 K2_PRO_MODEL="F012"
 K2_PRO_BOARD="CR0CN200400C10"
-HELIX_REPO="prestonbrown/helixscreen"
+# K2-OpenHost fork of HelixScreen (Kalico CFS data, updates from the fork).
+HELIX_REPO="MzTechnology97/helixscreen"
 REMOTE_DIR="/mnt/UDISK/k2oh-slotb"
 UPDATE_REMOTE_DIR="/mnt/UDISK/k2oh-update"
 
