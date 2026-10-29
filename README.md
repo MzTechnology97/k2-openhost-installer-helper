@@ -290,7 +290,7 @@ In this mode `--cfs-image` is a **CM5-local path**. Before touching the bus, the
 
 `--cfs-image` always requires `apply`, `--cfs`, and `--cfs-sha256`. No generic `--force` switch is introduced.
 
-The current custom image is **K2OH CFG6 RDG2**, hardware-tested on the reference K2 Pro CFS G32 on 28 October 2026, including Bambu RFID and live MCU remaining percentage 39% → 34%. The manifest now offers only this exact verified image; see [firmware/custom-cfs](firmware/custom-cfs/README.md) for its hash, scope and remaining tests. Older images remain in Git history and may be retained separately for recovery. Use T113 bootstrap 0.1.2 or later for custom CFS images so the staged filename preserves the OEM application version.
+Current custom image: **CFG6 SGF1/RH1 R3**, first in menu40; RDG2 remains the fallback. Reference RFID, RAM geometry, consumption and runout swap are verified. See [firmware/custom-cfs](firmware/custom-cfs/README.md), the [Kalico configuration](https://github.com/MzTechnology97/kalico-k2pro/blob/k2-pro-openhost/config/k2/macros/box_spool_profiles.cfg) and [calibration guide](https://github.com/MzTechnology97/kalico-k2pro/blob/k2-pro-openhost/docs/CFS_SPOOL_CALIBRATION.md). Use T113 bootstrap0.1.2+.
 
 The same operation is available in the interactive menu as **40) Experimental CFS firmware**, under a separate `[Experimental]` section. It only lists candidates present in `firmware/custom-cfs/manifest.json`: a `.bin` copied into the folder but not approved by the manifest is not offered. Before flashing it displays the hardware target, source application, filename, SHA-256 and risks; continuing requires typing exactly `FLASH EXPERIMENTAL CFS`. This acknowledgement is never bypassed by `--yes`.
 
