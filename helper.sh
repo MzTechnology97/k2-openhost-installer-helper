@@ -18,6 +18,26 @@ run() { bash "$S/$1" "${@:2}"; }
 CUSTOM_CFS_DIR="${CUSTOM_CFS_DIR:-$HELPER_DIR/firmware/custom-cfs}"
 CUSTOM_CFS_MANIFEST="${CUSTOM_CFS_MANIFEST:-$CUSTOM_CFS_DIR/manifest.json}"
 
+# Fail closed unless the CM5 confirms an idle printer AND idle CFS.
+# BOX_STATE=IDLE alone is insufficient (firmware issue #9).
+experimental_cfs_require_idle() {
+    local result
+    result="$(curl -fsS --max-time 5 \
+        'http://127.0.0.1:7125/printer/objects/query?print_stats&box' \
+        | python3 -c '
+import json,sys
+s=json.load(sys.stdin)["result"]["status"]
+print_state=s["print_stats"]["state"]
+box=s["box"]
+box_state=box["state"]
+operation=box.get("operation") or {}
+active=operation.get("active", True)
+print("%s|%s|%s" % (print_state,box_state,str(active).lower()))
+' 2>/dev/null)" || die "Cannot prove printer/CFS idle state: refusing experimental flash."
+    [[ "$result" == "standby|IDLE|false" ]] \
+        || die "Unsafe CFS flash state: $result (required standby|IDLE|false). Finish the print first."
+}
+
 experimental_cfs_menu() {
     local -a candidates=()
     local line choice=1 id filename sha hardware application description image actual ack manifest_rows
@@ -124,6 +144,7 @@ EOF
         return 0
     fi
 
+    experimental_cfs_require_idle
     run t113.sh mcu-fw apply --cfs --cfs-image "$image" --cfs-sha256 "$sha"
 }
 
