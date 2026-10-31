@@ -1,47 +1,22 @@
-> **CFS firmware v3.19 experimental:** menu 40 now recognizes the SHA-pinned v3.19 volatile-RAM bench candidate (`cfs0_050_G32/cfs0_000_153`). The BIN is distributed separately by [k2-cfs-rfid-tools](https://github.com/MzTechnology97/k2-cfs-rfid-tools/tree/main/firmware/v3.19-volatile-ram), must be placed locally in `firmware/custom-cfs/`, and is **not** for ordinary CFS motion. See [custom firmware safety and rollback instructions](firmware/custom-cfs/README.md). The previous v3.13 is retained as a rollback candidate.
-
 # K2-OpenHost Installer Helper
 
 **English** · [Italiano](README.it.md)
 
 > [!WARNING]
-> **Experienced users only — use at your own risk.** K2-OpenHost voids the manufacturer's warranty and can damage the printer beyond repair, brick its firmware or, in case of malfunction, cause a fire. The authors accept no liability for damage to property or persons.
-> In OpenHost mode the **nozzle and chamber cameras** cannot be managed by the T113 and must be rewired directly to the external Linux host, and the printer's **external USB port** cannot be used to print and stops working completely in gadget mode.
-> Read the [disclaimer and hardware limitations](https://github.com/MzTechnology97/K2-OpenHost/blob/main/docs/en/DISCLAIMER.md) ([italiano](https://github.com/MzTechnology97/K2-OpenHost/blob/main/docs/it/DISCLAIMER.md)) before using this repository.
+> **Experienced users only, at your own risk.** K2-OpenHost voids the warranty and can damage the printer beyond repair, brick its firmware or, if something fails, cause a fire. The authors accept no liability for damage to property or persons. In OpenHost mode the chamber camera must be rewired to the external host, the nozzle camera cannot be used, and the printer's external USB port stops working. Read the [disclaimer and hardware limits](https://mztechnology97.github.io/K2-OpenHost/DISCLAIMER/) first.
 
-> **Experimental — pending hardware tests.** The installer reproduces the software stack validated on the K2-OpenHost reference machine (Creality K2 Pro + Raspberry Pi CM5), but a complete install on a fresh host has not been verified end to end yet. Use a spare SD card or eMMC image and keep your current setup.
-
-The K2-OpenHost Installer Helper turns an external Linux computer into a ready [K2-OpenHost](https://github.com/MzTechnology97/K2-OpenHost) host. It installs Kalico, Moonraker and the Mainsail K2-OpenHost fork, which run the Creality K2 Pro through its original mainboard; the K2's T113 board acts as a USB gadget bridge. The menu is styled after the [Creality Helper Script for the K2 series](https://github.com/tofuliang/Creality-Helper-Script-K2-Series).
-
-From the same menu it also prepares the printer: the **T113 bootstrap** writes a K2-OpenHost system to the T113's spare slot B, with the USB gadget bridges and HelixScreen pointed at this host. One menu sets up both the external host and the printer. MCU firmware updates stay a manual, confirmed step.
+The helper turns an external Linux computer into a [K2-OpenHost](https://mztechnology97.github.io/K2-OpenHost/) host for the Creality K2 Pro. It installs Kalico, Moonraker and the Mainsail K2-OpenHost fork, and from the same menu it prepares the printer: the T113 bootstrap writes a K2-OpenHost system to the T113's spare slot B, with the USB gadget bridges and HelixScreen pointed at this host. It also updates everything, checks the system, makes backups and flashes MCU firmware with Creality's own tools.
 
 ```text
-Creality K2 Pro mainboard (T113)                External Linux host (this installer)
-  Main MCU   ttyS2 ── ttyGS0 ─┐                  ┌── by-id …-if00-port0 (/dev/k2-main)
-  Nozzle MCU ttyS3 ── ttyGS1 ─┼── service USB ───┼── by-id …-if01-port0 (/dev/k2-nozzle)
-  RS-485/CFS ttyS5 ── ttyGS2 ─┘                  └── by-id …-if02-port0 (/dev/k2-rs485)
+Creality K2 Pro mainboard (T113)                External Linux host (this helper)
+  Main MCU   ttyS2 ── ttyGS0 ─┐                  ┌── /dev/k2-main
+  Nozzle MCU ttyS3 ── ttyGS1 ─┼── service USB ───┼── /dev/k2-nozzle
+  RS-485/CFS ttyS5 ── ttyGS2 ─┘                  └── /dev/k2-rs485
                                                      Kalico · Moonraker · Mainsail
   Cartographer3D (optional) ────────── direct USB ──> /dev/k2-cartographer
 ```
 
-<img src="docs/images/cli-menu.png" alt="Installer menu" width="760">
-
-## Contents
-
-1. [Quick start](#quick-start)
-2. [Step-by-step guide for beginners](#step-by-step-guide-for-beginners)
-3. [What gets installed](#what-gets-installed)
-4. [Menu reference](#menu-reference)
-5. [Printer T113 bootstrap](#printer-t113-bootstrap)
-6. [Command line](#command-line)
-7. [Your printer configuration](#your-printer-configuration)
-8. [Health check (doctor)](#health-check-doctor)
-9. [Updates](#updates)
-10. [Backup and restore](#backup-and-restore)
-11. [Troubleshooting](#troubleshooting)
-12. [Safety](#safety)
-13. [Roadmap](#roadmap)
-14. [Credits](#credits)
+<img src="docs/images/cli-menu.png" alt="Helper menu" width="760">
 
 ## Quick start
 
@@ -55,380 +30,51 @@ git clone https://github.com/MzTechnology97/k2-openhost-installer-helper.git ~/k
 
 Choose **1) Full install**, reboot, connect the K2 and run `~/k2-openhost-installer-helper/helper.sh doctor`. Then open `http://<host-name-or-ip>/`.
 
-## Step-by-step guide for beginners
+The full guide, from flashing the SD card to the first print, is in the wiki: [installation](https://mztechnology97.github.io/K2-OpenHost/installation/). The software stack is the one running every day on the reference K2 Pro with a CM5; a complete install on a fresh host has not been repeated end to end yet, so keep your current setup until the new one works.
 
-No Linux experience is needed: every command below can be copied and pasted.
+## What it installs
 
-### 1. What you need
+- **Host:** build tools, serial port access, stable names for the K2 channels (`/dev/k2-main`, `/dev/k2-nozzle`, `/dev/k2-rs485`, `/dev/k2-cartographer`), `~/printer_data`. ModemManager and brltty are stopped because they grab USB serial ports.
+- **Kalico** [`k2-pro-openhost`](https://github.com/MzTechnology97/kalico-k2pro) with the K2 Pro profile, a start gate that waits for the gadget channels, and KAMP (built into Kalico).
+- **Moonraker** and **Mainsail K2-OpenHost** (CFS panel, filament library, print mapping, motor panel) behind nginx.
+- With the full install: Moonraker timelapse and Klippain Shake&Tune.
+- Optional: Cartographer3D (official plugin), Crowsnest with the Creality chamber camera fix, the host MCU, the CM5 fan from Klipper, Spoolman, Mobileraker, OctoEverywhere.
 
-| Item | Notes |
-| --- | --- |
-| A host computer | Raspberry Pi 4, Pi 5 or Compute Module 5 with at least 2 GB RAM (the reference machine is a CM5). Any 64-bit Debian/Ubuntu computer also works. |
-| Storage | microSD card or eMMC of 16 GB or more. |
-| Power supply | The official supply for your board. Under-voltage causes random disconnections. |
-| USB cable | A **data** cable from a host USB port to the K2 service Micro-USB port. Charge-only cables do not work. |
-| Network | Ethernet or Wi-Fi, with internet access during the install. |
-| The K2 | A **Creality K2 Pro** on stock firmware, reachable on your network. The T113 bootstrap was prepared and tested on **1.1.0.94**; on newer firmware it and the T113 USB gadget (OTG) mode are not guaranteed. Its T113 board must run the three USB gadget serial bridges: menu **23** checks the printer and menu **24** installs them in the printer's spare system slot (slot B) with HelixScreen, leaving the current system (slot A) untouched. See the [T113 bootstrap guide](https://github.com/MzTechnology97/k2-openhost-t113-bootstrap/blob/main/README.md). |
-| Another computer | Windows, macOS or Linux, to prepare the card and connect to the host. |
-| Cameras (optional) | The nozzle and chamber cameras cannot run through the T113 in OpenHost mode: rewire their original cable path to USB ports of the host, then use the Crowsnest option. |
+Existing files are never overwritten: folders are renamed with a date, files are backed up, and a newer profile file is written next to yours as `.k2oh-new`.
 
-The printer's external USB port (for USB sticks) cannot be used to print and stops working completely once the T113 is in gadget mode: send files from Mainsail instead.
+## Everyday commands
 
-### 2. Prepare the card with Raspberry Pi Imager
-
-1. Download and install [Raspberry Pi Imager](https://www.raspberrypi.com/software/) on your computer.
-2. **Choose device:** your board (for example Raspberry Pi 5 or CM5).
-3. **Choose OS:** *Raspberry Pi OS (other)* → **Raspberry Pi OS Lite (64-bit)**. The Lite version has no desktop, which leaves more resources for Klipper.
-4. **Choose storage:** your microSD card (or the CM5 eMMC through `rpiboot`).
-5. Click **Next** → **Edit settings** and set:
-   - **hostname:** `k2host` (you will reach Mainsail at `http://k2host.local/`);
-   - **username and password:** for example `pi` and a password you will remember;
-   - **Wi-Fi:** name and password, if you do not use Ethernet; set your country;
-   - **Services** tab: **Enable SSH** → *Use password authentication*.
-6. Click **Save**, then **Yes** to write the card. Wait until it finishes and remove the card.
-
-### 3. First start
-
-1. Insert the card in the host, connect Ethernet if you use it, and power it on.
-2. Wait about two minutes for the first start to finish.
-3. Find the host on the network: try `ping k2host.local` from your computer. If the name does not answer, look for `k2host` in your router's list of connected devices and note its IP address (for example `192.168.1.50`).
-
-### 4. Connect with SSH
-
-Open a terminal on your computer:
-
-- **Windows:** right-click Start → *Terminal* (or *Windows PowerShell*);
-- **macOS:** *Terminal* from Applications → Utilities;
-- **Linux:** your terminal application.
-
-Type (replace `pi` with your username, and `k2host.local` with the IP address if needed):
-
-```bash
-ssh pi@k2host.local
-```
-
-The first time, answer `yes` to the fingerprint question. Then type your password: **nothing appears while you type**, which is normal. Press Enter. You are now on the host; the prompt looks like `pi@k2host:~ $`.
-
-### 5. Update the system and install Git
-
-```bash
-sudo apt update && sudo apt full-upgrade -y
-sudo apt install -y git
-```
-
-`sudo` may ask for your password again. The upgrade can take several minutes.
-
-### 6. Download the installer
-
-```bash
-git clone https://github.com/MzTechnology97/k2-openhost-installer-helper.git ~/k2-openhost-installer-helper
-```
-
-### 7. Run the full install
-
-```bash
-~/k2-openhost-installer-helper/helper.sh
-```
-
-The menu above appears. Type `1` and press Enter, then confirm with Enter. During the install:
-
-- each step starts with a `==>` heading and every completed action shows a green `✔`;
-- yellow `!` lines are information that needs no action unless the text says so;
-- you may be asked these questions; pressing Enter accepts the suggested answer (the capital letter):
-
-| Question | What it means | Suggested |
+| Command | Menu | What it does |
 | --- | --- | --- |
-| `Stop and disable ModemManager (it probes serial ports)? [Y/n]` | ModemManager is a service for USB modems; it can disturb the K2 serial channels. | Yes |
-| `Remove brltty (it claims USB serial devices)? [Y/n]` | brltty is for Braille displays and can grab USB serial devices. | Yes |
-| `Allow nginx to reach /home/pi/mainsail (chmod o+x /home/pi)? [Y/n]` | Lets the web server read the Mainsail files in your home folder. | Yes |
-| `Move it aside and clone ...? [Y/n]` | A folder with the same name already exists; it is renamed, never deleted. | Yes |
+| `./helper.sh` | | the menu |
+| `./helper.sh doctor` | 16 | checks host, Klipper, CFS, motors and the RS-485 link |
+| `./helper.sh update` | 17 | updates Kalico, Moonraker and Mainsail |
+| `./helper.sh release status` / `apply` | 34 | compares with the tested release and applies it |
+| `./helper.sh backup` / `restore` | 20 / 21 | configuration, filament library, CFS state and Moonraker database |
+| `./helper.sh t113 install` | 24 | writes slot B on the T113 (printer idle) |
+| `./helper.sh t113 update` | 33 | updates K2-OpenHost's programs on slot B |
+| `./helper.sh t113 mcu-fw update` | 31 | MCU, motor and CFS firmware with Creality's tools |
 
-The full install takes 10–30 minutes, depending on the board and the internet connection. It ends with a summary that shows the Mainsail address.
-
-To install without questions, run `~/k2-openhost-installer-helper/helper.sh --yes install full` instead.
-
-### 8. Restart once
-
-```bash
-sudo reboot
-```
-
-This applies the serial-port permissions given to your user. Reconnect with `ssh` after a minute.
-
-### 9. Connect the K2
-
-1. Connect the USB data cable between a USB port of the host and the K2 service Micro-USB port.
-2. Prepare the printer's T113 board (details in [Printer T113 bootstrap](#printer-t113-bootstrap)):
-   1. menu **23) Check the printer**: read-only, it confirms the K2 Pro and shows the firmware release slot B would use;
-   2. menu **24) Install the T113 bootstrap**: builds slot B from Creality's own firmware, writes it (slot A untouched) and offers the trial boot;
-   3. after the trial boot, when Mainsail shows the printer ready, menu **27) Keep slot B**.
-3. Klipper starts by itself: it waits up to 60 seconds for the three channels every time it starts.
-
-### 10. Check the host
-
-```bash
-~/k2-openhost-installer-helper/helper.sh doctor
-```
-
-Every line should be green. Red `✘` lines say what is wrong and how to fix it; see [Health check](#health-check-doctor) and [Troubleshooting](#troubleshooting).
-
-### 11. Open Mainsail
-
-In your browser open `http://k2host.local/` (or `http://<ip-address>/`). The dashboard shows the CFS panel, the live filament path and the printer state. The [Mainsail K2-OpenHost guide](https://github.com/MzTechnology97/mainsail-k2openhost/blob/develop/docs/K2_CFS.md) explains every CFS feature, including the filament library and how to add your own filaments.
-
-To send prints from the official OrcaSlicer with the CFS slots already in its filament list, see [OrcaSlicer and the CFS](https://github.com/MzTechnology97/K2-OpenHost/blob/main/docs/en/ORCASLICER.md).
-
-Before printing, follow the checks in the [hardware test plan](https://github.com/MzTechnology97/K2-OpenHost/blob/main/docs/en/HARDWARE_TEST_PLAN.md): homing, heaters and a first supervised print.
-
-## What gets installed
-
-| Step | What it does |
-| --- | --- |
-| **Host preparation** | Build tools and Python, `dialout`/`tty` groups, udev names `/dev/k2-main`, `/dev/k2-nozzle`, `/dev/k2-rs485`, `/dev/k2-cartographer`; stops ModemManager and removes brltty (both grab USB serial ports); creates `~/printer_data`. |
-| **Kalico K2-OpenHost** | [kalico-k2pro](https://github.com/MzTechnology97/kalico-k2pro) `k2-pro-openhost` in `~/klipper`: K2 extras, CFS/Box stack, closed-loop motor control, PRTouch, z_align, power-loss recovery and built-in KAMP. Creates `~/klippy-env`, `klipper.service`, and a start gate that waits up to 60 s for the three gadget channels. |
-| **K2 Pro configuration** | The `config/k2` profile from kalico-k2pro into `~/printer_data/config`: `printer.cfg` (MCUs, motion, heaters, input shaper, includes), `timelapse.cfg`, and the printer files in `macros/`: `system.cfg`, `sensors.cfg`, `leds.cfg`, `print.cfg`, `kamp.cfg`, `fans.cfg`, `maintenance.cfg`, `openhost_controls.cfg`, `box.cfg`, `motor_control.cfg`, `k2_t113.cfg`, `prtouch.cfg`, `cartographer.cfg`, `overrides.cfg`. With an older Kalico (no `config/k2/macros/`) the files go to the config root as before. Existing files are kept; a printer that still includes them from the config root gets a warning. |
-| **Moonraker** | Upstream Moonraker with its own installer (virtualenv, service, polkit) and a `moonraker.conf` for a home network, with update-manager entries for the Mainsail fork and this installer. Kalico and Moonraker are updated by Moonraker's built-in entries. |
-| **Mainsail K2-OpenHost** | The latest prebuilt [mainsail-k2openhost](https://github.com/MzTechnology97/mainsail-k2openhost) release: CFS panel, live filament path, filament library, slot editor, RFID sheet and print mapping. nginx serves it on port 80. Without a release it builds from source when Node.js 20+ is present. |
-| **Full install** adds | Moonraker timelapse (the K2 profile ships its macros) and Klippain Shake&Tune. |
-
-Optional components:
-
-- **Cartographer3D**: the [official plugin](https://github.com/Cartographer3D/cartographer3d-plugin), which supports Kalico and the K2 directly, connected by direct USB. PRTouch stays the validated probe. The plugin is a pip package in `~/klippy-env` with its loader in `klippy/plugins/`; Moonraker updates it as a Python package and the installer keeps the loader after every Kalico install or update. A host with the former K2-OpenHost fork is migrated automatically.
-- **Crowsnest** webcam streaming. With the K2 Plus 1080p chamber camera (Creality CAM, USB `1d6c:0103`) connected, which replaces the stock 720p camera on the reference K2 Pro, it also sets that camera's `[cam]` section to `max_fps: 25` and adds its controls in `v4l2ctl` (`./helper.sh install creality-cam` does only this step). At 30 fps the camera's auto exposure turns the image black; see [Chamber camera](https://github.com/MzTechnology97/K2-OpenHost/blob/main/docs/en/CAMERA.md). Reboot the host afterwards: the camera takes its controls from power-on.
-- **Host MCU** `[mcu rpi]`: GPIO, accelerometer and temperature of the host board.
-- **Host fan from Klipper** (menu 36, `./helper.sh install host-fan`): the CPU fan on the CM5's fan header (reference: CM5 on a Waveshare CM5-IO-BASE-A) driven by Kalico's `[host_fan]`. It installs a udev rule that gives Klipper's group write access to the fan (`pwm1` of hwmon `pwmfan`) and to the `cpu-thermal` zone's `mode`, a `klipper.service` drop-in that gives the fan back to the kernel when Klipper stops or crashes, and `macros/host_fan.cfg` with its include. Klipper is not restarted: the module starts at the next restart. See [Host hardware](https://github.com/MzTechnology97/K2-OpenHost/blob/main/docs/en/HOST.md).
-- **Spoolman** connection to an existing Spoolman server.
-- **Mobileraker** companion and **OctoEverywhere** remote access.
-
-KAMP is not installed separately: Kalico already includes it, and the K2 profile's `kamp.cfg` configures it.
-
-## Menu reference
-
-| # | Entry | What it does |
-| --- | --- | --- |
-| 1 | Full install | Core install plus Moonraker timelapse and Shake&Tune. Recommended for a new host. |
-| 2 | Core install | Host preparation, Kalico, K2 Pro configuration, Moonraker and Mainsail, then starts Klipper. |
-| 3 | Host preparation | Packages, serial groups, udev names, ModemManager and brltty. Safe to run again. |
-| 4 | Kalico K2-OpenHost | Installs or updates `~/klipper`, `~/klippy-env`, `klipper.service` and the start gate. |
-| 5 | K2 Pro configuration | Copies the profile files you do not have yet; for changed files it saves the profile version as `<file>.k2oh-new`. |
-| 6 | Moonraker | Installs Moonraker and adds the missing `moonraker.conf` sections. |
-| 7 | Mainsail K2-OpenHost | Installs or updates the web interface and the nginx site. |
-| 8–15 | Optional components | Cartographer3D, Shake&Tune, timelapse, Crowsnest, host MCU, Spoolman, Mobileraker, OctoEverywhere. |
-| 16 | Doctor | Read-only health check. |
-| 17 | Update | Updates Kalico, Moonraker and Mainsail. Refused while printing. |
-| 18 | Compare config | Shows how your configuration differs from the K2 profile. |
-| 19 | Serial names | Switches `printer.cfg` and the start gate to `/dev/k2-*` names, independent of USB enumeration order. |
-| 20 / 21 | Backup / Restore | Archives or restores the configuration, CFS filament library and CFS state. |
-| 22 | Restart | Restarts Klipper and Moonraker. Refused while printing. |
-| 23 | Check the printer | Read-only: asks the printer IP and confirms this host's IP, checks over SSH that the printer is a K2 Pro (model `F012`, board `CR0CN200400C10`), the running slot, free space and slot A's firmware, and shows the Creality release slot B would be built from. Writes nothing. |
-| 24 | Install the T113 bootstrap | Clones the [T113 bootstrap](https://github.com/MzTechnology97/k2-openhost-t113-bootstrap), repeats the checks, builds slot B from Creality's OTA (slot A's release or a newer one; tested on 1.1.0.94 only), adds HelixScreen, writes slot B (slot A untouched) and offers the trial boot. |
-| 25 | T113 status | Running slot, next boot, trial flag, first-boot setup, HelixScreen. |
-| 26 | Trial boot slot B | Boots slot B once; a power cycle returns to slot A. |
-| 27 | Keep slot B | Makes slot B the default (run on a working slot B). |
-| 28 | Boot slot A | Back to the printer's original system. |
-| 29 | Change the host address | Updates the host used by HelixScreen and `k2oh-mcu-fw` on the printer. |
-| 30 | MCU firmware status | Board versions on the printer and the firmware files slot B would flash. |
-| 31 | Update MCU firmware | Downloads the latest Creality release, stages it, shows what changes and flashes only if you confirm. When the printer is idle it offers to stop Klipper on this host, then passes the printer a proof that the gadget ports are free (`sudo` is needed); unknown states block. Step by step: `./helper.sh t113 mcu-fw list\|download\|stage\|apply` (see the guide). |
-| 32 | Link the T113 controls | Connects this host to `k2oh-ctl` on slot B. It copies the shared token to `~/printer_data/config/k2oh_t113.token`, sets `host` in `k2_t113.cfg` (in `macros/` or the config root, as the printer keeps it) and writes the Moonraker power device `K2_MCU_Power` (`moonraker_k2_t113.conf`). It turns the `k2_t113.cfg` include on only when the installed Kalico has the module. The install offers it too. |
-| 33 | Update the T113 programs | On a running slot B, updates K2-OpenHost's programs (`/etc/init.d/k2oh-*`, `/usr/bin/k2oh-*`, `/usr/sbin/k2oh-*`) and boot links without reinstalling, so the boards keep their firmware. It shows the printer's `--check` first and applies only if you confirm; boot-time programs need a reboot, which it offers. Refused during a print. `./helper.sh t113 update --revert` goes back to the image's programs. Needs bootstrap 0.1.3 or later. |
-| 34 | Release status | Compares what is installed (Kalico checkout, Mainsail build, this installer, the T113 bootstrap checkout) with the latest K2-OpenHost release: the commits validated together on the reference printer. Read-only. See [Releases](#releases). |
-| 35 | Apply the release | Brings Kalico and Mainsail to the release. See [Releases](#releases). |
-| 40 | Experimental CFS firmware | Lists manifest-approved candidates from `firmware/custom-cfs/`, verifies SHA-256 and hardware/application target, then shows an explicit risk disclaimer. Continuing requires typing `FLASH EXPERIMENTAL CFS`; `--yes` cannot bypass it. The actual flash remains delegated to Creality stock tools. |
-
-Entries already installed show `[installed]`. If a step fails, the menu shows the error and stays open.
-
-## Printer T113 bootstrap
-
-The printer's own T113 board runs the USB gadget bridges to this host. The bootstrap puts a K2-OpenHost system in the T113's **spare slot B** and never writes **slot A**, the system the printer runs today. It is developed in its own repository: [k2-openhost-t113-bootstrap](https://github.com/MzTechnology97/k2-openhost-t113-bootstrap). Its [complete guide](https://github.com/MzTechnology97/k2-openhost-t113-bootstrap/blob/main/README.md) covers every step, the trial boot, recovery and removal.
-
-> [!IMPORTANT]
-> Prepared and tested on the K2 Pro stock firmware **1.1.0.94**. Newer releases are accepted with a warning, but on them the bootstrap and the T113 USB gadget (OTG) mode are **not guaranteed**.
-
-**1. Check the printer** (menu 23, `./helper.sh t113 check`). Read-only: model, slot, free space, firmware release and the Creality release slot B would use.
-
-<img src="docs/images/cli-t113-check.png" alt="T113 check" width="760">
-
-**2. Install** (menu 24, `./helper.sh t113 install`):
-1. downloads the Creality OTA from Creality's CDN and checks its MD5;
-2. builds slot B and adds HelixScreen;
-3. uploads to the printer, backs up the old slot B and the U-Boot environment, writes slot B and reads it back;
-4. saves this host's IP for HelixScreen and `k2oh-mcu-fw`.
-
-**3. Trial boot** (menu 26). Slot B boots once. If it does not come up, power cycle the printer and it returns to slot A. On the first boot HelixScreen installs itself, already pointed at this host. Connect the service Micro-USB cable and check Mainsail, then **keep slot B** (menu 27). Menu 28 returns to slot A at any time.
-
-**Time zone:** the T113 ships on China time (Asia/Shanghai). `./helper.sh t113 timezone` gives slot B this host's time zone, so the printer's logs line up with the host's; `boot-b`, `commit` and `update` do it too. Slot A is never changed.
-
-**Updating slot B later** (menu 33, `./helper.sh t113 update`): K2-OpenHost's programs are updated on the running slot B, without the reinstall from slot A, which would flash slot A's own firmware files back onto the boards at boot.
-
-**4. MCU, motor and CFS firmware** (menu 31, `./helper.sh t113 mcu-fw update`):
-1. downloads the latest Creality release and keeps only the firmware files;
-2. stages it in slot B and shows which boards would change;
-3. flashes **only if you answer yes**, with Creality's own tools, after checking that Klipper on this host is stopped (`sudo systemctl stop klipper`).
-
-For a **custom CFS image that intentionally keeps the same application version**, the file remains on the CM5 until the guarded flash path verifies and transfers it to the T113. The current curated CFS firmware menu includes the **experimental K2OH v3.23 CFG4** build (not yet hardware-qualified), the **v3.22 recovery image**, and legacy v3.13/v3.12 candidates. Older releases are retained only in firmware-project history. Configuration writes are compatible solely with the matching modified firmware distributed by k2-cfs-rfid-tools; OpenCFS is detected separately but does not receive CFG4 SET.
-
-Example for the explicitly selected experimental image, after downloading it to the CM5 and checking its SHA-256:
-
-```bash
-./helper.sh t113 mcu-fw apply --cfs \
-  --cfs-image ./firmware/custom-cfs/cfs0_050_G32-cfs0_000_153-runtime-config-v3_23-K2OH-CFG4-EXPERIMENTAL.bin \
-  --cfs-sha256 118f34118edeb1e3d4ac018445b3fb839f8762b9d762bbfc011e62861fe8f71b
-```
-
-[Italiano — menu CFS](firmware/custom-cfs/README.it.md) | [English menu](firmware/custom-cfs/README.md) | [Parameters EN](https://github.com/MzTechnology97/k2-cfs-rfid-tools/blob/main/docs/CFS_V323_PARAMETER_GUIDE_EN.md).
-
-In this mode `--cfs-image` is a **CM5-local path**. Before touching the bus, the helper:
-
-1. verifies SHA-256 on the CM5;
-2. checks that the filename encodes the exact CFS hardware and application identity;
-3. verifies over SSH that the installed T113 bootstrap supports the guarded custom-image path;
-4. uploads the file under `/mnt/UDISK/.k2openhost/custom-cfs-upload/...` and verifies SHA-256 again on the T113;
-5. only then checks print state and stops Klipper;
-6. generates `k2oh-host-evidence`, then runs `k2oh-mcu-fw` over SSH on the T113;
-7. the actual flash remains delegated to Creality's stock tools (`mcu_update` / `mcu_util_485`);
-8. after the command, removes the transfer copy from the T113.
-
-`--cfs-image` always requires `apply`, `--cfs`, and `--cfs-sha256`. No generic `--force` switch is introduced.
-
-Current custom image: **CFG6 SGF1/RH1 R3**, first in menu40; RDG2 remains the fallback. Reference RFID, RAM geometry, consumption and runout swap are verified. See [firmware/custom-cfs](firmware/custom-cfs/README.md), the [Kalico configuration](https://github.com/MzTechnology97/kalico-k2pro/blob/k2-pro-openhost/config/k2/macros/box_spool_profiles.cfg) and [calibration guide](https://github.com/MzTechnology97/kalico-k2pro/blob/k2-pro-openhost/docs/CFS_SPOOL_CALIBRATION.md). Use T113 bootstrap0.1.2+.
-
-The same operation is available in the interactive menu as **40) Experimental CFS firmware**, under a separate `[Experimental]` section. It only lists candidates present in `firmware/custom-cfs/manifest.json`: a `.bin` copied into the folder but not approved by the manifest is not offered. Before flashing it displays the hardware target, source application, filename, SHA-256 and risks; continuing requires typing exactly `FLASH EXPERIMENTAL CFS`. This acknowledgement is never bypassed by `--yes`.
-
-`apply --cfs` includes the CFS units. This is an example run on slot B, answering no:
-
-<img src="docs/images/cli-t113-mcu-fw-update.png" alt="k2oh-mcu-fw update" width="760">
-
-**5. T113 control service** (menu 32, `./helper.sh t113 link`): connects Kalico and Moonraker to `k2oh-ctl` on the printer:
-- the buzzer: `BUZZER`, `M300`, and the external RFID beep;
-- T113 telemetry: `BOARD_STATUS`;
-- bridge and HelixScreen restarts;
-- the MCU power rail: the Moonraker power device `K2_MCU_Power`, locked while printing, and `MCU_POWER_CYCLE CONFIRM=1`.
-
-Restart Moonraker and Klipper afterwards (menu 22).
-
-## Command line
-
-Every menu entry is also available as a command, useful for scripts and remote sessions:
-
-<img src="docs/images/cli-help.png" alt="Command line help" width="760">
-
-Settings can be changed through environment variables, for example `KALICO_BRANCH=my-branch ./helper.sh install kalico`.
-
-## Your printer configuration
-
-The K2 Pro profile lives in kalico-k2pro (`~/klipper/config/k2`). The installer copies it into `~/printer_data/config`, where Mainsail edits it.
-
-A first install copies every file:
-
-<img src="docs/images/cli-config.png" alt="Profile installed" width="760">
-
-Your changes are never overwritten. When a profile file has been updated and you also changed your copy, your version stays in place and the new profile version is saved next to it as `<file>.k2oh-new`:
-
-<img src="docs/images/cli-config-kept.png" alt="Your version kept" width="760">
-
-`./helper.sh config diff` (menu 18) shows what differs, so you can copy the parts you want:
-
-<img src="docs/images/cli-config-diff.png" alt="Configuration differences" width="760">
-
-**Serial paths.** `printer.cfg` names the gadget channels by interface, with the udev names that host preparation (menu 3) installs: `/dev/k2-main` (Main MCU), `/dev/k2-nozzle` (Nozzle MCU) and `/dev/k2-rs485` (RS-485/CFS). The Klipper start gate waits for the same names. They match the gadget by vendor, product and interface number, so they are the same with T113 slot A's stock gadget and with slot B's K2-OpenHost gadget. The `/dev/serial/by-id` names are not: `usb-Allwinner_Technology_Inc._Gadget_Serial-if00-port0` in slot A, `usb-Creality_K2_Pro_K2-OpenHost_Gadget_Serial_<serial>-if00-port0` in slot B.
-
-Why not `/dev/ttyUSB0/1/2`: their numbers follow enumeration order. In the [USB bridge failure tests](https://github.com/MzTechnology97/K2-OpenHost/blob/main/docs/en/USB_BRIDGE.md#failure-tests), the gadget reconnected while Klipper still held the old ports, and the channels came back as `ttyUSB2/3/4`.
-- With `ttyUSBn` names, `FIRMWARE_RESTART` could not reconnect.
-- With the by-id names, it did. The `/dev/k2-*` names are udev links of the same kind, which follow the device.
-
-To convert an older `printer.cfg`: menu 19 (`./helper.sh config serial-names`) sets the three `serial:` lines by section and updates the start gate. `config.sh serial-names --by-id` uses slot A's by-id names instead. The T113 install (menu 24) converts `printer.cfg` to the `/dev/k2-*` names by itself.
-
-## Health check (doctor)
-
-`./helper.sh doctor` (menu 16) checks the host without changing anything:
+Updates, restores and Klipper restarts are refused while a print is running or paused. Every entry and its options: [menu reference](https://mztechnology97.github.io/K2-OpenHost/helper/menu/), [doctor](https://mztechnology97.github.io/K2-OpenHost/helper/doctor/), [T113 bootstrap](https://mztechnology97.github.io/K2-OpenHost/T113_BOOTSTRAP/), [updates and releases](https://mztechnology97.github.io/K2-OpenHost/installation/updates/), [backup](https://mztechnology97.github.io/K2-OpenHost/installation/backup/).
 
 <img src="docs/images/cli-doctor.png" alt="Doctor output" width="760">
-
-| Section | What it checks |
-| --- | --- |
-| Host | Operating system, serial groups of your user, ModemManager. |
-| T113 USB gadget | The K2 gadget is connected, each channel (Main MCU, Nozzle MCU, RS-485/CFS) matches the device used in `printer.cfg`, no other process uses the channels, and the usbserial binding persists across reboots. |
-| Services | Klipper, Moonraker and nginx are running, plus optional services; the Klipper start gate is installed. |
-| Software | Kalico repository, branch and commit; installed Mainsail version. |
-| Cartographer | The official plugin is installed (not the former K2-OpenHost fork) and exactly one loader exists. |
-| Klipper and the CFS | Klipper state, CFS Box driver and mode, CFS units online, closed-loop motors ready, filament library file, RS-485 link state. |
-
-The example above was taken on the reference machine: it reports a running ModemManager and an installed but stopped Crowsnest.
-
-### Automatic check after boots and updates
-
-Menu 3 (`scripts/system.sh install`, or `scripts/system.sh health-install` on its own) installs a check that runs by itself:
-
-- **at every boot** (`k2oh-health@boot.service`): it waits up to 4 minutes for Klipper and the motor startup, then runs the doctor;
-- **after every apt/dpkg change** (`/etc/apt/apt.conf.d/99k2openhost-health` starts `k2oh-health@apt.service` without blocking apt). It also says when a reboot is pending, and fails if the newest installed kernel has no `usbserial` module, because the T113 channels would not come back after the reboot.
-
-The result:
-
-- appears in the **Klipper console** in Mainsail (`K2-OpenHost check after boot: OK.`, or the problems in red);
-- is kept in `printer_data/logs/k2oh-health.log`;
-- with `K2OH_HEALTH_NOTIFY_CMD="..."` in `printer_data/systemd/k2oh-health.env`, your own command (Telegram, apprise, mail) receives the summary as its argument.
-
-The check changes nothing. Run it by hand with `./helper.sh health`; `scripts/system.sh health-remove` removes it.
-
-## Updates
-
-- **From Mainsail:** *Machine* → *Update Manager* updates Kalico, Moonraker, Mainsail (pre-release channel), Cartographer and this installer.
-- **From the installer:** menu 17 or `./helper.sh update`.
-- **The installer itself:** at every start, like KIAUH, it looks for new commits on the branch it follows. If there are any, it lists them and asks *Update the installer helper now?*; on yes it updates and restarts with the same command. It never touches local changes, and it skips the check without a terminal (timers, scripts), with `--yes` (only a notice) or with `K2OH_NO_UPDATE_CHECK=1`. By hand: `git -C ~/k2-openhost-installer-helper pull`.
-
-Updates are refused while a print is running or paused.
-
-### Releases
-
-The branches above move with every merge. A **release** is the set of component commits validated together on the reference printer, listed in [`releases/stable.json`](https://github.com/MzTechnology97/K2-OpenHost/blob/main/releases/stable.json) of the K2-OpenHost repository with the firmware it was tested with.
-
-- `./helper.sh release status` (menu 34): each component against the release (`on the release`, `N commit(s) behind`, `newer than the release`). It only fetches the Git checkouts.
-- `./helper.sh release apply` (menu 35): fast-forwards Kalico to the release commit and installs the release's Mainsail build. A component newer than the release, on another branch or with local changes is left as it is: nothing is downgraded or overwritten. Refused during a print. Klipper is restarted only if you confirm and only with every heater off; otherwise the old code keeps running until you restart it.
-- `./helper.sh release apply --t113` also updates the T113 programs to the release's bootstrap (the same `--check` and confirmation as menu 33).
-
-`K2OH_RELEASE_MANIFEST` points to another manifest (a file or a URL).
-
-## Backup and restore
-
-`./helper.sh backup` (menu 20) saves `~/printer_data/config`, the CFS filament library (`config/cfs_filaments.json`), the CFS state (`filament_box.json`) and the Moonraker database in `~/k2-openhost-backups`:
-
-<img src="docs/images/cli-backup.png" alt="Backup" width="760">
-
-`./helper.sh restore` (menu 21) lists the archives, makes a backup of the current state first, then restores the chosen one.
 
 ## Troubleshooting
 
 | Symptom | What to do |
 | --- | --- |
-| doctor: `not in group dialout` / `tty` | Restart the host (`sudo reboot`) or log out and in again. |
-| doctor: `ModemManager is running` | `sudo systemctl stop ModemManager`, or run menu 3 again. |
-| doctor: `the K2 gadget (0525:a4a6) is not connected` | Check that the cable is a data cable and is in the K2 **service** Micro-USB port; check that the T113 bridges run; `lsusb` must list *Linux-USB Serial Gadget*. |
-| doctor: `interface .. is /dev/ttyUSBx but printer.cfg uses ...` | Use menu 19 (stable serial names), then restart Klipper. |
-| doctor: `process … also uses /dev/ttyUSBx` or `retired Cartographer MUX demux` | A second reader takes bytes meant for Klipper; on the RS-485 channel the CFS and the motors stop answering. Stop that process. For the old demux run `scripts/system.sh retire-demux` (menu 3 also offers it), then restart Klipper. |
-| doctor: `RS-485 link LOST` | Klipper gets no RS-485 replies. Check for other readers (line above), that the T113 RS-485 bridge runs, and that the CFS is powered. |
-| Mainsail shows *mcu 'mcu': Unable to connect* | Same checks as for the gadget. Klipper retries by itself; *Firmware restart* in Mainsail retries at once. |
-| Klipper not active | `journalctl -u klipper -e` and `~/printer_data/logs/klippy.log` show the reason. |
-| Browser shows *403 Forbidden* | Run `chmod o+x ~` and reload, or run menu 7 again. |
+| doctor: `not in group dialout` / `tty` | Reboot the host, or log out and in again. |
+| doctor: `the K2 gadget (0525:a4a6) is not connected` | Use a data cable in the K2's **service** Micro-USB port; `lsusb` must list *Linux-USB Serial Gadget*. |
+| doctor: `interface .. is /dev/ttyUSBx but printer.cfg uses ...` | Menu 19 (stable serial names), then restart Klipper. |
+| doctor: `process … also uses /dev/ttyUSBx` | Another program reads the channel and the CFS or motors stop answering: stop it. The old Cartographer demux is removed with `scripts/system.sh retire-demux`. |
+| Mainsail: *mcu 'mcu': Unable to connect* | Same checks as for the gadget; *Firmware restart* in Mainsail retries at once. |
+| Browser shows *403 Forbidden* | `chmod o+x ~` and reload, or run menu 7 again. |
 | Browser cannot reach the host | `sudo systemctl status nginx`; check the address with `hostname -I`. |
-| CFS panel: driver not ready | Check that the CFS is powered and connected; the Box discovery takes a few seconds after Klipper starts. |
-| doctor: `crowsnest not active` | Only matters with a webcam: `sudo systemctl status crowsnest` and `~/printer_data/config/crowsnest.conf`. |
 
-When asking for help, attach the output of `./helper.sh doctor` and `~/printer_data/logs/klippy.log`.
-
-## Safety
-
-- Nothing is deleted: existing folders are renamed (`<folder>.before-k2openhost-<date>`), files are backed up before changes, and your configuration is never overwritten silently.
-- Updates, Klipper restarts and restores are refused while a print is running or paused.
-- Do not connect or disconnect the gadget cable while printing.
-
-## Roadmap
-
-- End-to-end install test on a fresh Raspberry Pi OS image.
-- Hardware validation of the T113 bootstrap (slot B), its trial boot and `k2oh-mcu-fw apply`.
+More in the wiki's [troubleshooting](https://mztechnology97.github.io/K2-OpenHost/reference/troubleshooting/). When asking for help, attach `./helper.sh doctor` and `~/printer_data/logs/klippy.log`.
 
 ## Credits
 
-- [K2-OpenHost](https://github.com/MzTechnology97/K2-OpenHost) and its upstream projects: Klipper, Kalico, Jacob10383/Jacobean (K2 Kalico, extras, Cartographer port, Fluidd CFS workflow), luketot (K2 Pro baseline), Moonraker (Arksine), Mainsail, Cartographer3D, Klippain Shake&Tune, moonraker-timelapse, Crowsnest, DnG-Crafts/K2-RFID.
-- Menu layout inspired by the Creality Helper Script (Guilouz, sw3defy, tofuliang).
+K2-OpenHost builds on Klipper, Kalico, Jacob10383 (K2 Kalico, extras, CFS workflow), luketot (K2 Pro baseline), Moonraker, Mainsail, Cartographer3D, Klippain Shake&Tune, moonraker-timelapse, Crowsnest and DnG-Crafts/K2-RFID. The menu layout is inspired by the [Creality Helper Script](https://github.com/tofuliang/Creality-Helper-Script-K2-Series) (Guilouz, sw3defy, tofuliang).
 
 License: GPL-3.0.
