@@ -33,3 +33,7 @@ Il fallback RDG2 ha SHA-256
 `7d611c5845d3c248cf55f57972fdc7fab1761d0e281bcbf70030ac97e458023f`.
 Sul riferimento erano verificati RFID e decremento 39→34; non include la
 geometria SGF1/RH1.
+
+## Candidato R4-PRECISION1
+
+La terza voce del menu40 e il candidato sperimentale per il residuo in mm, ancora da verificare sulla stampante. R3 resta la prima voce e RDG2 la seconda. Occorrono i moduli Kalico associati per usare la nuova precisione; i vecchi client mantengono il percorso precedente. Vedere il [manifest](SGF1-RH1-R4-PRECISION1-firmware-manifest.json) e la [procedura di prova](https://github.com/MzTechnology97/kalico-k2pro/blob/feature/cfs-precise-remaining-20261029/docs/CFS_PRECISE_REMAINING.md). Eseguire flash e riavvio soltanto a stampa conclusa.
